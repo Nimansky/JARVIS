@@ -1,6 +1,6 @@
-# YARVIS
+# JARVIS
 
-**YARVIS** (*Yet Another RISC-V Implementation Study*) is supposed to be a fully functional implementation of a RISC-V processor (mainly) in **SystemVerilog**.
+**JARVIS** (*Just Another RISC-V Implementation Study*) is supposed to be a fully functional implementation of a RISC-V processor (mainly) in **SystemVerilog**.
 
 ## Scope
 
