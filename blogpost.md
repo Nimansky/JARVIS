@@ -19,7 +19,161 @@ Use Verilator 5.019 for simulation
 
 ...
 
-# The ALU
+# Instruction Fetch
+
+### Instruction Memory
+
+in order to perform an instruction fetch, there needs to be an instruction memory to fetch from. for simulation purposes, I will implement pseudo-ROM containing some instructions to be executed. it's 4KB with cycle-aligned read access, and it loads given programs at simulation time.
+
+```verilog
+module instr_mem(
+    input clk,
+    output [31:0] data_out,
+    input [31:0] addr
+);
+
+    reg [31:0] mem [1023:0]; // 4 KB instr mem
+
+    initial begin
+        $readmemh("init/sample_prog0.mem", mem); // executes 'addi rs1, rs1, 1000' 5 times
+    end
+
+    always @ (posedge clk) begin
+        data_out <= mem[addr[9:0]];
+    end
+
+endmodule
+```
+
+### Fetching
+
+for now, fetching is literally as simple as just instantiating the instr_mem module and forwarding the requested pc as well as the clock. This is the naive solution, and so far no special mechanisms such as Branch Prediction are planned, so I will continue with this approach until I run into further problems which require further refinement.
+
+```verilog
+`include "src/instr_mem.v"
+
+module instr_fetch(
+    input clk,
+    input [31:0] pc,
+    output [31:0] instr
+);
+
+    // for now nothing needs to be done besides fetching an instruction
+    instr_mem im (
+        .clk(clk),
+        .addr(pc),
+        .data_out(instr)
+    );
+
+endmodule
+```
+
+# Instruction Decode
+
+After receiving 32 bits of instruction, we need to decode. In our (so far very primitive) case, this means mapping opcode + funct bits to our internal encoding (s. above). We realize this via nested case statements.
+
+```verilog
+`include "src/constants.v"
+
+module instr_decode(
+    input clk,
+    input [31:0] instr,
+    output reg [5:0] op,
+    output reg rs1_v,
+    output reg [4:0] rs1,
+    output reg rs2_v,
+    output reg [4:0] rs2,
+    output reg [4:0] rd,
+    output reg imm_v,
+    output reg [31:0] imm
+);
+
+    always @ (posedge clk) begin
+        case (instr[6:0])
+            7'b0110011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    3'b000: begin
+                        case (instr[31:25]) /* -- FUNCT7 --*/
+                            7'b0000000: ...  // ADD
+                            7'b0100000: ... // SUB
+                        endcase
+                    end
+                    3'b001: ... // SLL
+                    3'b010: ... // SLT
+                    3'b011: ... // SLTU
+                    3'b100: ... // XOR
+                    3'b101: begin
+                        case (instr[31:25]) /* -- FUNCT7 --*/
+                            7'b0000000: ... // SRL
+                            7'b0100000: ... // SRA
+                        endcase
+                    end
+                    3'b110: ... // OR
+                    3'b111: ... // AND
+                endcase
+            end
+            7'b0010011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    3'b000: ... // ADDI
+                    3'b001: ... // SLLI
+                    3'b010: ... // SLTI
+                    3'b011: ... // SLTIU
+                    3'b100: ... // XORI
+                    3'b101: begin
+                        case (instr[31:25]) /* -- FUNCT7 --*/
+                            7'b0000000: ... // SRLI
+                            7'b0100000: ... // SRAI
+                        endcase
+                    end
+                    3'b110: ... // ORI
+                    3'b111: ... // ANDI
+                endcase
+            end
+            7'b0000011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    3'b000: ... // LB
+                    3'b001: ... // LH
+                    3'b010: ... // LW
+                    3'b100: ... // LBU
+                    3'b101: ... // LHU
+                endcase
+            end
+            7'b0100011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    3'b000: ... // SB
+                    3'b001: ... // SH
+                    3'b010: ... // SW
+                endcase
+            end
+            7'b1100011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    3'b000: ... // BEQ
+                    3'b001: ... // BNE
+                    3'b100: ... // BLT
+                    3'b101: ... // BGE
+                    3'b110: ... // BLTU
+                    3'b111: ... // BGEU
+                endcase
+            end
+            7'b1100111: ... // JALR
+            7'b1101111: ... // JAL
+            7'b0110111: ... // LUI
+            7'b0010111: ... // AUIPC
+            7'b1110011: begin
+                case (instr[14:12]) /* -- FUNCT3 --*/
+                    12'h000: ... // ECALL
+                    12'h001: ... // EBREAK
+                endcase
+            end
+        endcase
+    end
+
+endmodule;
+```
+
+# Execute 
+
+### The ALU
 
 for starters, let's implement a basic ALU that implements *some* instructions. Out of the 40 instructions in the base ISA, the following are being implemented:
 
@@ -91,5 +245,40 @@ always @ (posedge clk) begin
     endcase
 end
 
+endmodule
+```
+
+### The Register File
+
+for starters, I implemented a simple register file with 32x full word (32 bit) registers - with one separate read and write port each. In the future, there could be more ports, *potentially*. The code looks like this:
+
+```verilog
+module regfile 
+(
+    input clk,
+    input [4:0] read_addr,
+    input [31:0] data_in,
+    input write_enable,
+    input [4:0] write_addr,
+    output [31:0] data_out
+);
+
+    reg [31:0] regs [31:0];
+
+    // for simulation only
+    initial begin
+
+        // set all regs to 0
+        $readmemh("init/regfile.mem", regs);
+    end
+
+    always @ (posedge clk) begin
+        if (write_enable) begin
+            regs[write_addr] <= data_in;
+        end
+    end
+    
+    assign data_out = regs[read_addr];
+    
 endmodule
 ```
