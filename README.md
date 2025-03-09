@@ -4,12 +4,12 @@
 
 ## Scope
 
-The implementation should consist of at least:
+The goals of the implementation are as follows:
 - RV32I
 - M extension
-- 5 stage pipelined execution (IF ID EX MA WB)
-- Some sort of (minimal) memory interface
 - VERY basic caching (I-Cache and D-Cache, incl. adequate placement policies, replacement policies and eviction policies)
+- 5 stage pipelined execution (IF ID EX MA WB)
+- Some sort of memory interface for FPGA (BRAM) or ASIC (DDR, AXI, AHB, SRAM) memory
 
 ## Outline
 
@@ -17,8 +17,11 @@ The implementation should consist of at least:
 A rough collection of components that need to be implemented:
 - 1 ALU
 - 1 LSU
-- 1 MUL unit
+- 1 MUL/DIV unit
 - Register File (32 regs, check with spec)
+- Instruction Fetch Stage
+- Instruction Decode Stage
+- Pipeline Control Unit (branching, stalling, forwarding; pipeline overhead)
 - I-Cache and D-Cache
 
 #### Considerations
