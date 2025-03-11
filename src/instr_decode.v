@@ -10,16 +10,20 @@ module instr_decode(
     output reg [4:0] rs2,
     output reg [4:0] rd,
     output reg imm_v,
-    output reg [31:0] imm
+    output reg [31:0] imm,
+    output reg load_store_instr
 );
 
-    always @ (posedge clk) begin
+    always @ (*) begin
+        load_store_instr = 0;
         case (instr[6:0])
             7'b0110011: begin
                 case (instr[14:12])
                     3'b000: begin
                         case (instr[31:25]) 
-                            default,
+                            default: begin
+                                // ??
+                            end
                             7'b0000000: begin
                                 // ADD
                             end
@@ -42,7 +46,9 @@ module instr_decode(
                     end
                     3'b101: begin
                         case (instr[31:25])
-                            default,
+                            default: begin
+                                // ??
+                            end
                             7'b0000000: begin
                                 // SRL
                             end
@@ -63,14 +69,14 @@ module instr_decode(
                 case (instr[14:12])
                     3'b000: begin
                         // ADDI
-                        op <= `ADDI;
-                        rs1_v <= 1;
-                        rs1 <= instr[19:15];
-                        rs2_v <= 0;
-                        rs2 <= 0;
-                        rd <= instr[11:7];
-                        imm_v <= 1;
-                        imm <= {{20{instr[31]}}, instr[31:20]};
+                        op = `ADDI;
+                        rs1_v = 1;
+                        rs1 = instr[19:15];
+                        rs2_v = 0;
+                        rs2 = 0;
+                        rd = instr[11:7];
+                        imm_v = 1;
+                        imm = {{20{instr[31]}}, instr[31:20]};
                     end
                     3'b001: begin
                         // SLLI
@@ -86,7 +92,9 @@ module instr_decode(
                     end
                     3'b101: begin
                         case (instr[31:25])
-                            default,
+                            default: begin
+                                // ??
+                            end
                             7'b0000000: begin
                                 // SRLI
                             end
@@ -104,6 +112,7 @@ module instr_decode(
                 endcase
             end
             7'b0000011: begin
+                load_store_instr = 1;
                 case (instr[14:12])
                     3'b000: begin
                         // LB
@@ -120,6 +129,9 @@ module instr_decode(
                     3'b101: begin
                         // LHU
                     end
+                    default: begin
+                        // ??
+                    end
                 endcase
             end
             7'b0100011: begin
@@ -132,6 +144,9 @@ module instr_decode(
                     end
                     3'b010: begin
                         // SW
+                    end
+                    default: begin
+                        // ??
                     end
                 endcase
             end
@@ -155,6 +170,9 @@ module instr_decode(
                     3'b111: begin
                         // BGEU
                     end
+                    default: begin
+                        // ??
+                    end
                 endcase
             end
             7'b1100111: begin
@@ -170,12 +188,15 @@ module instr_decode(
                 // AUIPC
             end
             7'b1110011: begin
-                case (instr[14:12])
+                case (instr[31:20])
                     12'h000: begin
                         // ECALL
                     end
                     12'h001: begin
                         // EBREAK
+                    end
+                    default: begin
+                        // ??
                     end
                 endcase
             end

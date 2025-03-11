@@ -7,14 +7,14 @@ module instr_mem #(
     output reg [31:0] data_out
 );
 
-    reg [31:0] mem [1023:0]; // 4 KB instr mem
+    reg [7:0] mem [4095:0]; // 4 KB instr mem
 
     initial begin
-        $readmemh($sformatf("init/%s.mem", PROG_NAME), mem); // executes 'addi rs1, rs1, 1000' 5 times
+        $readmemh($sformatf("init/%s.mem", PROG_NAME), mem);
     end
 
     always @ (posedge clk) begin
-        data_out = mem[addr[9:0]];
+        data_out <= {mem[addr[11:0]], mem[addr[11:0] + 1], mem[addr[11:0] + 2], mem[addr[11:0] + 3]};
     end
 
 endmodule

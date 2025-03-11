@@ -27,7 +27,7 @@ module instr_decode_tb();
     );
 
     initial begin
-        $dumpfile("dump.vcd");
+        $dumpfile("instr_decode_tb.vcd");
         $dumpvars();
         clk = 0;
 

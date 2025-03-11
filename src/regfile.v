@@ -1,11 +1,13 @@
 module regfile 
 (
     input clk,
-    input [4:0] read_addr,
+    input [4:0] read_addr1,
+    input [4:0] read_addr2,
     input [31:0] data_in,
     input write_enable,
     input [4:0] write_addr,
-    output [31:0] data_out
+    output [31:0] data_out1,
+    output [31:0] data_out2
 );
 
     reg [31:0] regs [31:0];
@@ -23,6 +25,7 @@ module regfile
         end
     end
     
-    assign data_out = regs[read_addr];
+    assign data_out1 = regs[read_addr1];
+    assign data_out2 = regs[read_addr2];
     
 endmodule

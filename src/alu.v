@@ -6,32 +6,36 @@ module alu
     input [31:0] a,
     input [31:0] b,
     input [5:0] alu_op,
-    output reg [31:0] result
+    output [31:0] result
 );
 
-always @ (posedge clk) begin
+reg [31:0] alu_out;
+
+always @ (*) begin
     case (alu_op)
         `ADDI,
-        `ADD: result <= a + b;
+        `ADD: alu_out = a + b;
         `SLTIU,
-        `SLTU: result <= (a < b) ? 1 : 0;
+        `SLTU: alu_out = (a < b) ? 1 : 0;
         `SLT,
-        `SLTI: result <= ($signed(a) < $signed(b)) ? 1 : 0;
+        `SLTI: alu_out = ($signed(a) < $signed(b)) ? 1 : 0;
         `ANDI,
-        `AND: result <= a & b;
+        `AND: alu_out = a & b;
         `ORI,
-        `OR: result <= a | b;
+        `OR: alu_out = a | b;
         `XORI,
-        `XOR: result <= a ^ b;
-        `SUB: result <= a - b;
+        `XOR: alu_out = a ^ b;
+        `SUB: alu_out = a - b;
         `SLL,
-        `SLLI: result <= a << b[4:0];
+        `SLLI: alu_out = a << b[4:0];
         `SRL,
-        `SRLI: result <= a >> b[4:0];
+        `SRLI: alu_out = a >> b[4:0];
         `SRA,
-        `SRAI: result <= {a[31], a[31:1]};
-        default: result <= 0;
+        `SRAI: alu_out = {a[31], a[31:1]};
+        default: alu_out = 0;
     endcase
 end
+
+assign result = alu_out;
 
 endmodule

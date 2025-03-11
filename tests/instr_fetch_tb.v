@@ -13,7 +13,7 @@ module instr_fetch_tb();
     );
 
     initial begin
-        $dumpfile("dump.vcd");
+        $dumpfile("instr_fetch_tb.vcd");
         $dumpvars();
         clk = 0;
 
@@ -21,19 +21,19 @@ module instr_fetch_tb();
         #10;
         $display("addr = %h, data_out = %h", addr, data_out);
 
-        addr = 32'h00000001;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h00000002;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h00000003;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
         addr = 32'h00000004;
+        #10;
+        $display("addr = %h, data_out = %h", addr, data_out);
+
+        addr = 32'h00000008;
+        #10;
+        $display("addr = %h, data_out = %h", addr, data_out);
+
+        addr = 32'h0000000C;
+        #10;
+        $display("addr = %h, data_out = %h", addr, data_out);
+
+        addr = 32'h00000010;
         #10;
         $display("addr = %h, data_out = %h", addr, data_out);
 

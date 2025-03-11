@@ -3,7 +3,7 @@
 module instr_fetch(
     input clk,
     input [31:0] pc,
-    output [31:0] instr_out
+    output reg [31:0] instr_out
 );
 
     // for now nothing needs to be done besides fetching an instruction
