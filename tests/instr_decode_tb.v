@@ -5,7 +5,7 @@ module instr_decode_tb();
     reg clk;
     reg [31:0] instr;
     wire [31:0] pc, next_pc;
-    wire rd_write_enable, res_src, branch, alu_input_conf;
+    wire rd_write_enable, res_src, branch, jump, alu_input_conf;
     wire [5:0] alu_op;
     wire [31:0] imm, rs1_data, rs2_data;
     wire [4:0] rd_write_addr;
@@ -24,6 +24,7 @@ module instr_decode_tb();
         .rd_write_addr(rd_write_addr),
         .res_src(res_src),
         .branch(branch),
+        .jump(jump),
         .alu_op(alu_op),
         .alu_input_conf(alu_input_conf),
         .imm(imm),
@@ -41,7 +42,7 @@ module instr_decode_tb();
         for (i = 0; i < 5; i++) begin
             instr = instrs[i];
             #10;
-            $display("op: %h rd_write_enable: %d res_src: %d branch: %d alu_input_conf: %d imm: %d rs1: %d rs2: %d rd_write: %d", alu_op, rd_write_enable, res_src, branch, alu_input_conf, imm, $signed(rs1_data), rs2_data, rd_write_addr);
+            $display("op: %h rd_write_enable: %d res_src: %d branch: %d jump: %d alu_input_conf: %d imm: %d rs1: %d rs2: %d rd_write: %d", alu_op, rd_write_enable, res_src, branch, jump, alu_input_conf, imm, $signed(rs1_data), rs2_data, rd_write_addr);
         end
         
         $finish;

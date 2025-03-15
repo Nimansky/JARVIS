@@ -18,6 +18,8 @@ module instr_decode(
     output rd_write_enable,
     output res_src,
     output branch,
+    output jump,
+    output mem_write_enable,
     output [5:0] alu_op,
     output alu_input_conf,
     output [31:0] imm,
@@ -30,6 +32,8 @@ module instr_decode(
     wire rd_write_en;
     wire result_src;
     wire is_branch;
+    wire is_jump;
+    wire mem_w_en;
     wire [5:0] op;
     wire alu_input_config;
     wire [2:0] imm_sel;
@@ -44,6 +48,8 @@ module instr_decode(
         .reg_write_enable(rd_write_en),
         .result_src(result_src),
         .is_branch(is_branch),
+        .is_jump(is_jump),
+        .mem_write_enable(mem_w_en),
         .alu_op(op),
         .alu_input_config(alu_input_config),
         .imm_sel(imm_sel)
@@ -77,6 +83,8 @@ module instr_decode(
     reg [4:0] rd_write_addr_reg;
     reg res_src_reg;
     reg branch_reg;
+    reg jump_reg;
+    reg mem_write_enable_reg;
     reg [5:0] alu_op_reg;
     reg alu_input_conf_reg;
     reg [31:0] imm_reg;
@@ -90,6 +98,8 @@ module instr_decode(
         rd_write_addr_reg <= instr[11:7];
         res_src_reg <= result_src;
         branch_reg <= is_branch;
+        jump_reg <= is_jump;
+        mem_write_enable_reg <= mem_w_en;
         alu_op_reg <= op;
         alu_input_conf_reg <= alu_input_config;
         imm_reg <= imm_v;
@@ -105,6 +115,8 @@ module instr_decode(
     assign rd_write_addr = rd_write_addr_reg;
     assign res_src = res_src_reg;
     assign branch = branch_reg;
+    assign jump = jump_reg;
+    assign mem_write_enable = mem_write_enable_reg;
     assign alu_op = alu_op_reg;
     assign alu_input_conf = alu_input_conf_reg;
     assign imm = imm_reg;

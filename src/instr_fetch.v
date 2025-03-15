@@ -17,8 +17,8 @@ module instr_fetch(
     wire [31:0] fetched_instr;
 
     mux pc_mux(
-        .a(pc_target_exec),
-        .b(next_pc),
+        .a(next_pc),
+        .b(pc_target_exec),
         .sel(pc_src_exec),
         .out(muxed_pc)
     );

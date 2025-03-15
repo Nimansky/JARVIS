@@ -5,6 +5,7 @@ module decode_control_unit(
     output reg reg_write_enable,
     output reg result_src,              // 0 for alu, 1 for mem
     output reg is_branch,
+    output reg mem_write_enable,
     output reg [5:0] alu_op,
     output reg alu_input_config,        // 0 for rs1+rs2, 1 for rs1+imm
     output reg [2:0] imm_sel          // 0 for imm_i, 1 for imm_u, 2 for imm_j, 3 for imm_b, 4 for imm_s

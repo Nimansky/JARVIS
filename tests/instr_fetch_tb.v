@@ -8,7 +8,7 @@ module instr_fetch_tb();
     instr_fetch instr_fetch(
         .clk(clk),
         .pc_target_exec(),          // needs input from exec
-        .pc_src_exec(1),            // 1 means PC should be incremented by 4 - needs output from exec
+        .pc_src_exec(0),            // 0 means PC should be incremented by 4 - needs output from exec
         .instr_decode(fetch_to_decode_instr),
         .pc_decode(fetch_to_decode_pc),
         .next_pc_decode(fetch_to_decode_next_pc)
