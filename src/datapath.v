@@ -9,31 +9,27 @@ module datapath (
     output reg [31:0] out
 );
 
-    reg [31:0] pc = 0;
-
     // concept for all stages:
     // wire for all outputs
     // store results in regs at each posedge clk
 
-    wire [31:0] fetch_instr_out;
+    wire [31:0] fetch_to_decode_pc, fetch_to_decode_next_pc, fetch_to_decode_instr;
 
     instr_fetch instr_fetch(
         .clk(clk),
-        .pc(pc),
-        .instr_out(fetch_instr_out)
+        .pc_target_exec(),          // needs input from exec
+        .pc_src_exec(1),            // 1 means PC should be incremented by 4 - needs output from exec
+        .instr_decode(fetch_to_decode_instr),
+        .pc_decode(fetch_to_decode_pc),
+        .next_pc_decode(fetch_to_decode_next_pc)
     );
-
-    reg [31:0] fetch_to_decode_instr_out;
-
-    always @ (posedge clk) begin
-        fetch_to_decode_instr_out <= fetch_instr_out;
-    end
 
     wire [5:0] decode_op;
     wire decode_rs1_v;
     wire [4:0] decode_rs1;
     wire decode_rs2_v;
     wire [4:0] decode_rs2;
+    wire decode_rd_v;
     wire [4:0] decode_rd;
     wire decode_imm_v;
     wire [31:0] decode_imm;
@@ -47,6 +43,7 @@ module datapath (
         .rs1(decode_rs1),
         .rs2_v(decode_rs2_v),
         .rs2(decode_rs2),
+        .rd_v(decode_rd_v),
         .rd(decode_rd), 
         .imm_v(decode_imm_v),
         .imm(decode_imm),
@@ -58,7 +55,8 @@ module datapath (
     reg [4:0] decode_to_regfile_rs1;
     reg decode_to_regfile_rs2_v;
     reg [4:0] decode_to_regfile_rs2;
-    reg [4:0] decode_to_exec_rd;
+    reg decode_to_writeback_rd_v;
+    reg [4:0] decode_to_writeback_rd;
     reg decode_to_exec_imm_v;
     reg [31:0] decode_to_exec_imm;
     reg decode_to_memacc_load_store_instr;
@@ -68,13 +66,19 @@ module datapath (
     wire [31:0] regfile_to_exec_rs1_data;
     wire [31:0] regfile_to_exec_rs2_data;
 
+    
+    // wires for writeback stage
+    wire [31:0] writeback_data_in;
+    wire writeback_write_enable;
+    wire [4:0] writeback_write_addr;
+
     regfile rf(
         .clk(clk),
         .read_addr1(decode_to_regfile_rs1),
         .read_addr2(decode_to_regfile_rs2),
-        .data_in(),         // later driven by WRITEBACK unit
-        .write_enable(),    // later driven by WRITEBACK unit
-        .write_addr(),      // later driven by WRITEBACK unit
+        .data_in(writeback_data_in),         // later driven by WRITEBACK unit
+        .write_enable(writeback_write_enable),    // later driven by WRITEBACK unit
+        .write_addr(writeback_write_addr),      // later driven by WRITEBACK unit
         .data_out1(regfile_to_exec_rs1_data),
         .data_out2(regfile_to_exec_rs2_data)
     );
@@ -88,7 +92,8 @@ module datapath (
         decode_to_regfile_rs1 = decode_rs1;
         decode_to_regfile_rs2_v = decode_rs2_v;
         decode_to_regfile_rs2 = decode_rs2;
-        decode_to_exec_rd = decode_rd;
+        decode_to_writeback_rd_v = decode_rd_v;
+        decode_to_writeback_rd = decode_rd;
         decode_to_exec_imm_v = decode_imm_v;
         decode_to_exec_imm = decode_imm;
         decode_to_memacc_load_store_instr = decode_load_store_instr;
@@ -146,12 +151,15 @@ module datapath (
     reg [31:0] memacc_to_writeback_data_out;
 
     always @ (posedge clk) begin
-        memacc_to_writeback_data_out_v <= memacc_data_out_v;
-        memacc_to_writeback_data_out <= memacc_data_out;
+        memacc_to_writeback_data_out <= memacc_data_out_v ? memacc_data_out : exec_to_memacc_out;
     end
 
 
     // TODO: writeback stage here
+
+    assign writeback_write_enable = decode_to_writeback_rd_v;
+    assign writeback_write_addr = decode_to_writeback_rd;
+    assign writeback_data_in = memacc_to_writeback_data_out;
 
 
     // memacc is last stage as of now (WB stage not implemented yet)

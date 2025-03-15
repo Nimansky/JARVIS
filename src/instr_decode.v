@@ -8,6 +8,7 @@ module instr_decode(
     output reg [4:0] rs1,
     output reg rs2_v,
     output reg [4:0] rs2,
+    output reg rd_v,
     output reg [4:0] rd,
     output reg imm_v,
     output reg [31:0] imm,
@@ -74,6 +75,7 @@ module instr_decode(
                         rs1 = instr[19:15];
                         rs2_v = 0;
                         rs2 = 0;
+                        rd_v = 1;
                         rd = instr[11:7];
                         imm_v = 1;
                         imm = {{20{instr[31]}}, instr[31:20]};

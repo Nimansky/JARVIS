@@ -68,6 +68,9 @@ module instr_fetch(
 endmodule
 ```
 
+In a later iteration, it becomes necessary to receive additional signals from the execute stage: a target PC as well as a signal to indicate whether or not to use the target PC instead of the normally incremented current PC (i.e. signals to enable jumps/branches).  
+Also, output the fetched PC as well as the next PC to be loaded (for access to PC down the line).
+
 # Instruction Decode
 
 After receiving 32 bits of instruction, we need to decode. In our (so far very primitive) case, this means mapping opcode + funct bits to our internal encoding (s. above). We realize this via nested case statements.
@@ -580,4 +583,10 @@ The Write-Back stage to write data to the register file (if applicable).
     - The Memory Spoofs access memory in 1 cycle, but that will NOT be the case with real memory. Therefore, I WILL need to implement stalling of the stages IF, ID, EX upon MA stall later on.
     - When an instruction is NOT a Load/Store, the memory MUSTN'T BE TOUCHED
         - **solution**: an additional "enable" signal added to memacc unit, to disable the entire unit when instr is NOT a load/store
-    
+- when trying to implement writeback stage:
+    - Demuxing the value to be written (either from loaded memory or from ALU result) proves difficult bc it accesses values from earlier stages (exec) which have not been forwarded per-cycle to this last stage in my current design (exec only goes to MA, then gets overwritten by next instr.)
+        - **solution**: we need to forward all data -> reworking of pipeline registers needed!
+- reworking pipeline registers:
+    - the current structure is very unflexible and unmodular, so take this chance to rework the pipeline register logic into the modules themselves as well!
+    - also increase modularity in general wherever possible: i.e. mux module, pc module, pc adder, ...
+    - make it so every stage outputs not only its own output to the next stage, but also info it received from previous stages

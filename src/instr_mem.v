@@ -4,7 +4,7 @@ module instr_mem #(
 (
     input clk,
     input [31:0] addr,
-    output reg [31:0] data_out
+    output wire [31:0] data_out
 );
 
     reg [7:0] mem [4095:0]; // 4 KB instr mem
@@ -13,8 +13,6 @@ module instr_mem #(
         $readmemh($sformatf("init/%s.mem", PROG_NAME), mem);
     end
 
-    always @ (posedge clk) begin
-        data_out <= {mem[addr[11:0]], mem[addr[11:0] + 1], mem[addr[11:0] + 2], mem[addr[11:0] + 3]};
-    end
+    assign data_out = {mem[addr[11:0]], mem[addr[11:0] + 1], mem[addr[11:0] + 2], mem[addr[11:0] + 3]};
 
 endmodule

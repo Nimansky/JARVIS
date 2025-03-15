@@ -6,8 +6,8 @@ module regfile
     input [31:0] data_in,
     input write_enable,
     input [4:0] write_addr,
-    output [31:0] data_out1,
-    output [31:0] data_out2
+    output reg [31:0] data_out1,
+    output reg [31:0] data_out2
 );
 
     reg [31:0] regs [31:0];
@@ -21,11 +21,10 @@ module regfile
 
     always @ (posedge clk) begin
         if (write_enable) begin
-            regs[write_addr] <= data_in;
-        end
+            regs[write_addr] = data_in;
+        end 
+        data_out1 = regs[read_addr1];
+        data_out2 = regs[read_addr2];
     end
-    
-    assign data_out1 = regs[read_addr1];
-    assign data_out2 = regs[read_addr2];
     
 endmodule

@@ -3,39 +3,27 @@
 module instr_fetch_tb();
 
     reg clk;
-    reg [31:0] addr;
-    wire [31:0] data_out;
+    wire [31:0] fetch_to_decode_pc, fetch_to_decode_next_pc, fetch_to_decode_instr;
 
-    instr_fetch instr_fetch (
+    instr_fetch instr_fetch(
         .clk(clk),
-        .pc(addr),
-        .instr_out(data_out)
+        .pc_target_exec(),          // needs input from exec
+        .pc_src_exec(1),            // 1 means PC should be incremented by 4 - needs output from exec
+        .instr_decode(fetch_to_decode_instr),
+        .pc_decode(fetch_to_decode_pc),
+        .next_pc_decode(fetch_to_decode_next_pc)
     );
 
+    integer i;
     initial begin
         $dumpfile("instr_fetch_tb.vcd");
         $dumpvars();
         clk = 0;
 
-        addr = 0;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h00000004;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h00000008;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h0000000C;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
-
-        addr = 32'h00000010;
-        #10;
-        $display("addr = %h, data_out = %h", addr, data_out);
+        for (i = 0; i < 8; i++) begin
+            $display("CYCLE %d: addr = %h, data_out = %h", i, fetch_to_decode_pc, fetch_to_decode_instr);
+            #10;
+        end
 
         $finish;
     end
