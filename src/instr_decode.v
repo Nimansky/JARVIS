@@ -1,211 +1,114 @@
 `include "src/constants.v"
+`include "src/decode_control_unit.v"
+`include "src/extender.v"
+`include "src/regfile.v"
 
 module instr_decode(
     input clk,
     input [31:0] instr,
-    output reg [5:0] op,
-    output reg rs1_v,
-    output reg [4:0] rs1,
-    output reg rs2_v,
-    output reg [4:0] rs2,
-    output reg rd_v,
-    output reg [4:0] rd,
-    output reg imm_v,
-    output reg [31:0] imm,
-    output reg load_store_instr
+    input [31:0] pc_in,
+    input [31:0] next_pc_in,
+
+    input [31:0] reg_write_data,
+    input reg_write_enable,
+    input [4:0] reg_write_addr,
+
+    output [31:0] pc_out,
+    output [31:0] next_pc_out,
+    output rd_write_enable,
+    output res_src,
+    output branch,
+    output [5:0] alu_op,
+    output alu_input_conf,
+    output [31:0] imm,
+    output [31:0] rs1_data,
+    output [31:0] rs2_data,
+    output [4:0] rd_write_addr
 );
 
-    always @ (*) begin
-        load_store_instr = 0;
-        case (instr[6:0])
-            7'b0110011: begin
-                case (instr[14:12])
-                    3'b000: begin
-                        case (instr[31:25]) 
-                            default: begin
-                                // ??
-                            end
-                            7'b0000000: begin
-                                // ADD
-                            end
-                            7'b0100000: begin
-                                // SUB
-                            end
-                        endcase
-                    end
-                    3'b001: begin
-                        // SLL
-                    end
-                    3'b010: begin
-                        // SLT
-                    end
-                    3'b011: begin
-                        // SLTU
-                    end
-                    3'b100: begin
-                        // XOR
-                    end
-                    3'b101: begin
-                        case (instr[31:25])
-                            default: begin
-                                // ??
-                            end
-                            7'b0000000: begin
-                                // SRL
-                            end
-                            7'b0100000: begin
-                                // SRA
-                            end
-                        endcase
-                    end
-                    3'b110: begin
-                        // OR
-                    end
-                    3'b111: begin
-                        // AND
-                    end
-                endcase
-            end
-            7'b0010011: begin
-                case (instr[14:12])
-                    3'b000: begin
-                        // ADDI
-                        op = `ADDI;
-                        rs1_v = 1;
-                        rs1 = instr[19:15];
-                        rs2_v = 0;
-                        rs2 = 0;
-                        rd_v = 1;
-                        rd = instr[11:7];
-                        imm_v = 1;
-                        imm = {{20{instr[31]}}, instr[31:20]};
-                    end
-                    3'b001: begin
-                        // SLLI
-                    end
-                    3'b010: begin
-                        // SLTI
-                    end
-                    3'b011: begin
-                        // SLTIU
-                    end
-                    3'b100: begin
-                        // XORI
-                    end
-                    3'b101: begin
-                        case (instr[31:25])
-                            default: begin
-                                // ??
-                            end
-                            7'b0000000: begin
-                                // SRLI
-                            end
-                            7'b0100000: begin
-                                // SRAI
-                            end
-                        endcase
-                    end
-                    3'b110: begin
-                        // ORI
-                    end
-                    3'b111: begin
-                        // ANDI
-                    end
-                endcase
-            end
-            7'b0000011: begin
-                load_store_instr = 1;
-                case (instr[14:12])
-                    3'b000: begin
-                        // LB
-                    end
-                    3'b001: begin
-                        // LH
-                    end
-                    3'b010: begin
-                        // LW
-                    end
-                    3'b100: begin
-                        // LBU
-                    end
-                    3'b101: begin
-                        // LHU
-                    end
-                    default: begin
-                        // ??
-                    end
-                endcase
-            end
-            7'b0100011: begin
-                case (instr[14:12])
-                    3'b000: begin
-                        // SB
-                    end
-                    3'b001: begin
-                        // SH
-                    end
-                    3'b010: begin
-                        // SW
-                    end
-                    default: begin
-                        // ??
-                    end
-                endcase
-            end
-            7'b1100011: begin
-                case (instr[14:12])
-                    3'b000: begin
-                        // BEQ
-                    end
-                    3'b001: begin
-                        // BNE
-                    end
-                    3'b100: begin
-                        // BLT
-                    end
-                    3'b101: begin
-                        // BGE
-                    end
-                    3'b110: begin
-                        // BLTU
-                    end
-                    3'b111: begin
-                        // BGEU
-                    end
-                    default: begin
-                        // ??
-                    end
-                endcase
-            end
-            7'b1100111: begin
-                // JALR
-            end
-            7'b1101111: begin
-                // JAL
-            end
-            7'b0110111: begin
-                // LUI
-            end
-            7'b0010111: begin
-                // AUIPC
-            end
-            7'b1110011: begin
-                case (instr[31:20])
-                    12'h000: begin
-                        // ECALL
-                    end
-                    12'h001: begin
-                        // EBREAK
-                    end
-                    default: begin
-                        // ??
-                    end
-                endcase
-            end
-            default: begin
-                // ??
-            end
-        endcase
+    // intermediate wires
+    wire rd_write_en;
+    wire result_src;
+    wire is_branch;
+    wire [5:0] op;
+    wire alu_input_config;
+    wire [2:0] imm_sel;
+
+    wire [31:0] rs1_d;
+    wire [31:0] rs2_d;
+
+    wire [31:0] imm_v;
+
+    decode_control_unit dcu(
+        .instr(instr),
+        .reg_write_enable(rd_write_en),
+        .result_src(result_src),
+        .is_branch(is_branch),
+        .alu_op(op),
+        .alu_input_config(alu_input_config),
+        .imm_sel(imm_sel)
+    );
+
+
+
+    regfile rf(
+        .clk(clk),
+        .read_addr1(instr[19:15]),
+        .read_addr2(instr[24:20]),
+        .data_in(reg_write_data),         // later driven by WRITEBACK unit
+        .write_enable(reg_write_enable),    // later driven by WRITEBACK unit
+        .write_addr(reg_write_addr),      // later driven by WRITEBACK unit
+        .data_out1(rs1_d),
+        .data_out2(rs2_d)
+    );
+
+
+
+    extender ex(
+        .in(instr[31:0]),
+        .imm_sel(imm_sel),
+        .out(imm_v)
+    );
+
+
+    // pipeline registers
+
+    reg rd_write_enable_reg;
+    reg [4:0] rd_write_addr_reg;
+    reg res_src_reg;
+    reg branch_reg;
+    reg [5:0] alu_op_reg;
+    reg alu_input_conf_reg;
+    reg [31:0] imm_reg;
+    reg [31:0] rs1_data_reg;
+    reg [31:0] rs2_data_reg;
+    reg [31:0] pc_reg;
+    reg [31:0] next_pc_reg;
+
+    always @ (posedge clk) begin
+        rd_write_enable_reg <= rd_write_en;
+        rd_write_addr_reg <= instr[11:7];
+        res_src_reg <= result_src;
+        branch_reg <= is_branch;
+        alu_op_reg <= op;
+        alu_input_conf_reg <= alu_input_config;
+        imm_reg <= imm_v;
+        rs1_data_reg <= rs1_d;
+        rs2_data_reg <= rs2_d;
+        pc_reg <= pc_in;
+        next_pc_reg <= next_pc_in;
     end
+
+    assign pc_out = pc_reg;
+    assign next_pc_out = next_pc_reg;
+    assign rd_write_enable = rd_write_enable_reg;
+    assign rd_write_addr = rd_write_addr_reg;
+    assign res_src = res_src_reg;
+    assign branch = branch_reg;
+    assign alu_op = alu_op_reg;
+    assign alu_input_conf = alu_input_conf_reg;
+    assign imm = imm_reg;
+    assign rs1_data = rs1_data_reg;
+    assign rs2_data = rs2_data_reg;
 
 endmodule;

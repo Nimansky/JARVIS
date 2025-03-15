@@ -24,98 +24,32 @@ module datapath (
         .next_pc_decode(fetch_to_decode_next_pc)
     );
 
-    wire [5:0] decode_op;
-    wire decode_rs1_v;
-    wire [4:0] decode_rs1;
-    wire decode_rs2_v;
-    wire [4:0] decode_rs2;
-    wire decode_rd_v;
-    wire [4:0] decode_rd;
-    wire decode_imm_v;
-    wire [31:0] decode_imm;
-    wire decode_load_store_instr;
+    wire [31:0] decode_to_exec_pc, decode_to_exec_next_pc;
+    wire decode_to_exec_rd_write_enable, decode_to_exec_res_src, decode_to_exec_branch, decode_to_exec_alu_input_conf;
+    wire [5:0] decode_to_exec_alu_op;
+    wire [31:0] decode_to_exec_imm, decode_to_exec_rs1_data, decode_to_exec_rs2_data;
+    wire [4:0] decode_to_exec_rd_write;
 
-    instr_decode instr_decode(
+    instr_decode decode(
         .clk(clk),
-        .instr(fetch_to_decode_instr_out),
-        .op(decode_op),
-        .rs1_v(decode_rs1_v),
-        .rs1(decode_rs1),
-        .rs2_v(decode_rs2_v),
-        .rs2(decode_rs2),
-        .rd_v(decode_rd_v),
-        .rd(decode_rd), 
-        .imm_v(decode_imm_v),
-        .imm(decode_imm),
-        .load_store_instr(decode_load_store_instr)
+        .instr(fetch_to_decode_instr),
+        .pc_in(fetch_to_decode_pc),
+        .next_pc_in(fetch_to_decode_next_pc),
+        .reg_write_data(0),     // TODO: connect to writeback stage
+        .reg_write_enable(0),   // TODO: connect to writeback stage
+        .reg_write_addr(0),     // TODO: connect to writeback stage
+        .pc_out(decode_to_exec_pc),
+        .next_pc_out(decode_to_exec_next_pc),
+        .rd_write_enable(decode_to_exec_rd_write_enable),
+        .rd_write_addr(decode_to_exec_rd_write),
+        .res_src(decode_to_exec_res_src),
+        .branch(decode_to_exec_branch),
+        .alu_op(decode_to_exec_alu_op),
+        .alu_input_conf(decode_to_exec_alu_input_conf),
+        .imm(decode_to_exec_imm),
+        .rs1_data(decode_to_exec_rs1_data),
+        .rs2_data(decode_to_exec_rs2_data)
     );
-
-    reg [5:0] decode_to_exec_op;
-    reg decode_to_regfile_rs1_v;
-    reg [4:0] decode_to_regfile_rs1;
-    reg decode_to_regfile_rs2_v;
-    reg [4:0] decode_to_regfile_rs2;
-    reg decode_to_writeback_rd_v;
-    reg [4:0] decode_to_writeback_rd;
-    reg decode_to_exec_imm_v;
-    reg [31:0] decode_to_exec_imm;
-    reg decode_to_memacc_load_store_instr;
-
-
-    // additional logic in decode stage: access regfile and read values if necessary
-    wire [31:0] regfile_to_exec_rs1_data;
-    wire [31:0] regfile_to_exec_rs2_data;
-
-    
-    // wires for writeback stage
-    wire [31:0] writeback_data_in;
-    wire writeback_write_enable;
-    wire [4:0] writeback_write_addr;
-
-    regfile rf(
-        .clk(clk),
-        .read_addr1(decode_to_regfile_rs1),
-        .read_addr2(decode_to_regfile_rs2),
-        .data_in(writeback_data_in),         // later driven by WRITEBACK unit
-        .write_enable(writeback_write_enable),    // later driven by WRITEBACK unit
-        .write_addr(writeback_write_addr),      // later driven by WRITEBACK unit
-        .data_out1(regfile_to_exec_rs1_data),
-        .data_out2(regfile_to_exec_rs2_data)
-    );
-
-    reg [31:0] exec_in1;
-    reg [31:0] exec_in2;
-
-    always @ (posedge clk) begin
-        decode_to_exec_op = decode_op;
-        decode_to_regfile_rs1_v = decode_rs1_v;
-        decode_to_regfile_rs1 = decode_rs1;
-        decode_to_regfile_rs2_v = decode_rs2_v;
-        decode_to_regfile_rs2 = decode_rs2;
-        decode_to_writeback_rd_v = decode_rd_v;
-        decode_to_writeback_rd = decode_rd;
-        decode_to_exec_imm_v = decode_imm_v;
-        decode_to_exec_imm = decode_imm;
-        decode_to_memacc_load_store_instr = decode_load_store_instr;
-    end
-
-
-    // conditional assignment of exec unit inputs; either reg values or immediate values
-    always @ (*) begin
-        if (decode_to_regfile_rs1_v && decode_to_regfile_rs2_v) begin
-            exec_in1 = regfile_to_exec_rs1_data;
-            exec_in2 = regfile_to_exec_rs2_data;
-        end else if (decode_to_regfile_rs1_v && decode_to_exec_imm_v) begin
-            exec_in1 = regfile_to_exec_rs1_data;
-            exec_in2 = decode_to_exec_imm;
-        end else if (decode_to_regfile_rs2_v && decode_to_exec_imm_v) begin
-            exec_in1 = regfile_to_exec_rs2_data;
-            exec_in2 = decode_to_exec_imm;
-        end else begin
-            exec_in1 = 0;
-            exec_in2 = 0;
-        end
-    end
     
     wire [31:0] exec_out;
 

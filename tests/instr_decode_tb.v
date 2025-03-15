@@ -4,57 +4,46 @@ module instr_decode_tb();
 
     reg clk;
     reg [31:0] instr;
-    wire [5:0] op;
-    wire rs1_v;
-    wire [4:0] rs1;
-    wire rs2_v;
-    wire [4:0] rs2;
-    wire rd_v;
-    wire [4:0] rd;
-    wire imm_v;
-    wire [31:0] imm;
-    wire load_store_instr;
+    wire [31:0] pc, next_pc;
+    wire rd_write_enable, res_src, branch, alu_input_conf;
+    wire [5:0] alu_op;
+    wire [31:0] imm, rs1_data, rs2_data;
+    wire [4:0] rd_write_addr;
 
-    instr_decode id(
+    instr_decode decode(
         .clk(clk),
         .instr(instr),
-        .op(op),
-        .rs1_v(rs1_v),
-        .rs1(rs1),
-        .rs2_v(rs2_v),
-        .rs2(rs2),
-        .rd_v(rd_v),
-        .rd(rd),
-        .imm_v(imm_v),
+        .pc_in(0),
+        .next_pc_in(0),
+        .reg_write_data(0),     
+        .reg_write_enable(0), 
+        .reg_write_addr(0),  
+        .pc_out(pc),
+        .next_pc_out(next_pc),
+        .rd_write_enable(rd_write_enable),
+        .rd_write_addr(rd_write_addr),
+        .res_src(res_src),
+        .branch(branch),
+        .alu_op(alu_op),
+        .alu_input_conf(alu_input_conf),
         .imm(imm),
-        .load_store_instr(load_store_instr)
+        .rs1_data(rs1_data),
+        .rs2_data(rs2_data)
     );
 
+    integer i;
+    integer instrs[5] = {32'h3E808093, 32'h4B008093, 32'h57808093, 32'h64008093, 32'h70808093};
     initial begin
         $dumpfile("instr_decode_tb.vcd");
         $dumpvars();
         clk = 0;
 
-        instr = 32'h3E808093;
-        #10;
-        $display("op: %h rs1_v: %d rs1: %d rs2_v: %d rs2: %d rd_v: %d rd: %d imm_v: %d imm: %d", op, rs1_v, rs1, rs2_v, rs2, rd_v, rd, imm_v, imm);
-
-        instr = 32'h4B008093;
-        #10;
-        $display("op: %h rs1_v: %d rs1: %d rs2_v: %d rs2: %d rd_v: %d rd: %d imm_v: %d imm: %d", op, rs1_v, rs1, rs2_v, rs2, rd_v, rd, imm_v, imm);
-
-        instr = 32'h57808093;
-        #10;
-        $display("op: %h rs1_v: %d rs1: %d rs2_v: %d rs2: %d rd_v: %d rd: %d imm_v: %d imm: %d", op, rs1_v, rs1, rs2_v, rs2, rd_v, rd, imm_v, imm);
-
-        instr = 32'h64008093;
-        #10;
-        $display("op: %h rs1_v: %d rs1: %d rs2_v: %d rs2: %d rd_v: %d rd: %d imm_v: %d imm: %d", op, rs1_v, rs1, rs2_v, rs2, rd_v, rd, imm_v, imm);
+        for (i = 0; i < 5; i++) begin
+            instr = instrs[i];
+            #10;
+            $display("op: %h rd_write_enable: %d res_src: %d branch: %d alu_input_conf: %d imm: %d rs1: %d rs2: %d rd_write: %d", alu_op, rd_write_enable, res_src, branch, alu_input_conf, imm, $signed(rs1_data), rs2_data, rd_write_addr);
+        end
         
-        instr = 32'h70808093;
-        #10;
-        $display("op: %h rs1_v: %d rs1: %d rs2_v: %d rs2: %d rd_v: %d rd: %d imm_v: %d imm: %d", op, rs1_v, rs1, rs2_v, rs2, rd_v, rd, imm_v, imm);
-
         $finish;
     end
 
