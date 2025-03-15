@@ -6,7 +6,7 @@ module memacc(
     input [31:0] next_pc_in,
     input rd_write_enable_in, 
     input [4:0] rd_write_addr_in,
-    input res_src_in, 
+    input [1:0] res_src_in, 
 
     input [31:0] exec_data_in,          // can either be used as address or forwarded to writeback as-is
     input mem_write_enable,
@@ -18,7 +18,7 @@ module memacc(
     output [31:0] next_pc_out,
     output rd_write_enable_out,
     output [4:0] rd_write_addr_out,
-    output res_src_out
+    output [1:0] res_src_out
 );
 
     wire [31:0] mem_data;
@@ -35,7 +35,7 @@ module memacc(
     reg [31:0] exec_data_out_reg, mem_data_out_reg, next_pc_out_reg;
     reg rd_write_enable_out_reg;
     reg [4:0] rd_write_addr_out_reg;
-    reg res_src_out_reg;
+    reg [1:0] res_src_out_reg;
 
     always @ (posedge clk) begin
         exec_data_out_reg <= exec_data_in;

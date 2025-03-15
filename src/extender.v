@@ -1,3 +1,6 @@
+`ifndef EXTENDER
+`define EXTENDER
+
 module extender(
     input [31:0] in,
     input [2:0] imm_sel,
@@ -13,3 +16,5 @@ module extender(
                  32'b0;
 
 endmodule
+
+`endif

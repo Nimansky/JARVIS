@@ -15,7 +15,8 @@ If the above is implemented sufficiently and if time still permits, implement so
 
 [RISC-V ISA Specs](https://github.com/riscv/riscv-isa-manual/releases/download/riscv-isa-release-2c2a793-2025-03-07/riscv-unprivileged.pdf) are used, obviously
 
-Use Verilator 5.019 for simulation
+- Use Verilator 5.019 for simulation
+- For now, Data and Instruction memories have been implemented as byte-addressable. However, RISC-V allows only for aligned accesses. So I will need to implement an exception for unaligned accesses.
 
 ...
 
@@ -174,9 +175,50 @@ module instr_decode(
 endmodule;
 ```
 
+In later iterations, this decoding is encapsulated in a decode control unit - reading the instruction bits and outputting all relevant control signals for this and all further iterations.  
+This stage will also subsume the register file (instead of the Execute stage as I had planned initially).
+
+### The Register File
+
+for starters, I implemented a simple register file with 32x full word (32 bit) registers - with 2 read ports and 1 write port. The code looks like this:
+
+```verilog
+module regfile 
+(
+    input clk,
+    input [4:0] read_addr,
+    input [31:0] data_in,
+    input write_enable,
+    input [4:0] write_addr,
+    output [31:0] data_out
+);
+
+    reg [31:0] regs [31:0];
+
+    // for simulation only
+    initial begin
+
+        // set all regs to 0
+        $readmemh("init/regfile.mem", regs);
+    end
+
+    always @ (posedge clk) begin
+        if (write_enable) begin
+            regs[write_addr] <= data_in;
+        end
+    end
+    
+    assign data_out = regs[read_addr];
+    
+endmodule
+```
+
+
 # Execute 
 
-initially, the only functional unit inside the Execute Unit should be an ALU. The Execute Unit does many things, but to just get it up and running, I will just have it fetch data from the register file, execute the instruction on the ALU, and output the result.
+initially, the only functional unit inside the Execute Unit should be an ALU. The Execute Unit does many things, but to just get it up and running, ~~I will just have it fetch data from the register file,~~ execute the instruction on the ALU, and output the result.
+
+The Execute unit also has to handle the calculation of jump targets and conditions.
 
 ### The ALU
 
@@ -253,40 +295,8 @@ end
 endmodule
 ```
 
-### The Register File
+In later iterations, the ALU also took on the role of calculating the conditions for the branch instructions (BEQ/BNE/BLT/BLTU/BGE/BGEU)
 
-for starters, I implemented a simple register file with 32x full word (32 bit) registers - with 2 read ports and 1 write port. In the future, there could be more ports, *potentially*. The code looks like this:
-
-```verilog
-module regfile 
-(
-    input clk,
-    input [4:0] read_addr,
-    input [31:0] data_in,
-    input write_enable,
-    input [4:0] write_addr,
-    output [31:0] data_out
-);
-
-    reg [31:0] regs [31:0];
-
-    // for simulation only
-    initial begin
-
-        // set all regs to 0
-        $readmemh("init/regfile.mem", regs);
-    end
-
-    always @ (posedge clk) begin
-        if (write_enable) begin
-            regs[write_addr] <= data_in;
-        end
-    end
-    
-    assign data_out = regs[read_addr];
-    
-endmodule
-```
 
 ### Execute Unit
 
@@ -344,6 +354,8 @@ module exec(
 
 endmodule
 ```
+
+In a later iteration, the calculation of branch/jump conditions and targets is also implemented in the exec unit.
 
 # Datapath / Pipeline Control
 
@@ -502,7 +514,6 @@ module data_mem (
     input [31:0] addr,
     input write_enable,
     input [31:0] data_in,
-    output reg data_out_v,
     output reg [31:0] data_out
 );
 
@@ -511,30 +522,28 @@ module data_mem (
     initial begin
         integer i;
         for(i = 0; i < 2097152; i = i + 1) begin
-            mem[i] = 0;
+            mem[i] = i[7:0];
         end
     end
 
     always @ (posedge clk) begin
         if(write_enable) begin
-            data_out_v <= 0;
-            data_out <= 0;
             mem[addr[20:0]] <= data_in[31:24];
             mem[addr[20:0] + 1] <= data_in[23:16];
             mem[addr[20:0] + 2] <= data_in[15:8];
             mem[addr[20:0] + 3] <= data_in[7:0];
-        end else begin
-            data_out_v <= 1;
-            data_out <= {mem[addr[20:0]], mem[addr[20:0] + 1], mem[addr[20:0] + 2], mem[addr[20:0] + 3]};
         end
     end
+
+    assign data_out = {mem[addr[20:0]], mem[addr[20:0] + 1], mem[addr[20:0] + 2], mem[addr[20:0] + 3]};
 
 endmodule
 ```
 
 ### The MemAcc Unit
 
-Very simple for now: just encapsulate the data memory and route input/output signals
+Very simple for now: just encapsulate the data memory and route input/output signals.
+Note that we forward the read memory AS WELL AS the forwarded result from the exec stage, because the selection of the appropriate result (i.e. whether the instruction was a load or not) will only be determined in the following write-back stage.
 
 ```verilog
 `include "src/data_mem.v"
@@ -563,10 +572,30 @@ endmodule
 
 # Write Back
 
-The Write-Back stage to write data to the register file (if applicable).
+The Write-Back stage takes a target register (decoded previously in the decode stage) and writes the instruction's result into it. The 'result' is determined by the type of instruction: for jumps/branches, it is the current PC + 4; for load instructions, it is data loaded during the memory access stage; for every other kind of instructions, it is some data calculated during the execute stage.
 
+It needs to connect to the decode stage in order to access the register file.
 
+```verilog
+module writeback(
+    input clk,
 
+    input [31:0] exec_data_in,
+    input [31:0] mem_data_in,
+    input [31:0] next_pc,
+    input [1:0] res_src,
+
+    output [31:0] data_out
+);
+
+    // this could potentially be a 3-way-mux if that'd be more practical for synthesis 
+    assign data_out = res_src == 2'b00 ? exec_data_in : 
+                      res_src == 2'b01 ? mem_data_in : 
+                      res_src == 2'b10 ? next_pc : 
+                      32'h0;    // return 0 if invalid res_src
+
+endmodule
+```
 
 
 # Problems I ran into
@@ -581,11 +610,9 @@ The Write-Back stage to write data to the register file (if applicable).
         - **solution**: I opted to define the arrays as X*4 lines of 8bit bytes (i.e. ```reg [31:0] arr [1023:0]``` becomes ```reg [7:0] arr [4095:0]```). Alternatively, it would've been possible to access the array with ```address >> 2``` inside the memory module.
 - When implementing the Memory Access Stage:
     - The Memory Spoofs access memory in 1 cycle, but that will NOT be the case with real memory. Therefore, I WILL need to implement stalling of the stages IF, ID, EX upon MA stall later on.
-    - When an instruction is NOT a Load/Store, the memory MUSTN'T BE TOUCHED
-        - **solution**: an additional "enable" signal added to memacc unit, to disable the entire unit when instr is NOT a load/store
 - when trying to implement writeback stage:
     - Demuxing the value to be written (either from loaded memory or from ALU result) proves difficult bc it accesses values from earlier stages (exec) which have not been forwarded per-cycle to this last stage in my current design (exec only goes to MA, then gets overwritten by next instr.)
-        - **solution**: we need to forward all data -> reworking of pipeline registers needed!
+        - **solution**: we need to forward all data from stage to stage -> reworking of pipeline registers needed!
 - reworking pipeline registers:
     - the current structure is very unflexible and unmodular, so take this chance to rework the pipeline register logic into the modules themselves as well!
     - also increase modularity in general wherever possible: i.e. mux module, pc module, pc adder, ...

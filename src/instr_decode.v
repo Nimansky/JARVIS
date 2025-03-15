@@ -16,7 +16,7 @@ module instr_decode(
     output [31:0] pc_out,
     output [31:0] next_pc_out,
     output rd_write_enable,
-    output res_src,
+    output [1:0] res_src,
     output branch,
     output jump,
     output mem_write_enable,
@@ -30,7 +30,7 @@ module instr_decode(
 
     // intermediate wires
     wire rd_write_en;
-    wire result_src;
+    wire [1:0] result_src;
     wire is_branch;
     wire is_jump;
     wire mem_w_en;
@@ -81,7 +81,7 @@ module instr_decode(
 
     reg rd_write_enable_reg;
     reg [4:0] rd_write_addr_reg;
-    reg res_src_reg;
+    reg [1:0] res_src_reg;
     reg branch_reg;
     reg jump_reg;
     reg mem_write_enable_reg;

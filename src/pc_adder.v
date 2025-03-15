@@ -1,3 +1,6 @@
+`ifndef ADDER
+`define ADDER
+
 module pc_adder(
     input [31:0] a,
     input [31:0] b,
@@ -7,3 +10,5 @@ module pc_adder(
     assign out = a + b;
 
 endmodule
+
+`endif

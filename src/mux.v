@@ -1,3 +1,6 @@
+`ifndef MUX
+`define MUX
+
 module mux(
     input wire [31:0] a,
     input wire [31:0] b,
@@ -8,3 +11,5 @@ module mux(
     assign out = sel ? b : a;
 
 endmodule
+
+`endif

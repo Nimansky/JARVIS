@@ -3,8 +3,9 @@
 module decode_control_unit(
     input [31:0] instr,
     output reg reg_write_enable,
-    output reg result_src,              // 0 for alu, 1 for mem
+    output reg [1:0] result_src,              // 0 for alu, 1 for mem, 2 for pc+4
     output reg is_branch,
+    output reg is_jump,
     output reg mem_write_enable,
     output reg [5:0] alu_op,
     output reg alu_input_config,        // 0 for rs1+rs2, 1 for rs1+imm
@@ -67,9 +68,10 @@ module decode_control_unit(
                         // ADDI
                         alu_op = `ADDI;
                         reg_write_enable = 1;
-                        result_src = 1;
+                        result_src = 0;
                         is_branch = 0;
-                        alu_input_config = 1;
+                        is_jump = 0;
+                        alu_input_config = 0;
                         imm_sel = 0;
                     end
                     3'b001: begin

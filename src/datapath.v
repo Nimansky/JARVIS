@@ -1,8 +1,8 @@
 `include "src/instr_fetch.v"
 `include "src/instr_decode.v"
-`include "src/regfile.v"
 `include "src/exec.v"
 `include "src/memacc.v"
+`include "src/writeback.v"
 
 module datapath (
     input clk,
@@ -15,12 +15,12 @@ module datapath (
 
     wire [31:0] fetch_to_decode_pc, fetch_to_decode_next_pc, fetch_to_decode_instr;
 
-    wire [31:0] exec_to_fetch_target_pc;
-    wire exec_to_fetch_pc_src;
+    wire [31:0] exec_to_fetch_target_pc;        // fed back from exec stage
+    wire exec_to_fetch_pc_src;                  // fed back from exec stage
 
     instr_fetch instr_fetch(
         .clk(clk),
-        .pc_target_exec(exec_to_fetch_target_pc),          // needs input from exec
+        .pc_target_exec(exec_to_fetch_target_pc),  
         .pc_src_exec(exec_to_fetch_pc_src),            // 0 means PC should be incremented by 4 - needs output from exec
         .instr_decode(fetch_to_decode_instr),
         .pc_decode(fetch_to_decode_pc),
@@ -28,14 +28,15 @@ module datapath (
     );
 
     wire [31:0] decode_to_exec_pc, decode_to_exec_next_pc;
-    wire decode_to_exec_rd_write_enable, decode_to_exec_res_src, decode_to_exec_branch, decode_to_exec_jump, decode_to_exec_mem_write_enable, decode_to_exec_alu_input_conf;
+    wire [1:0] decode_to_exec_res_src;
+    wire decode_to_exec_rd_write_enable, decode_to_exec_branch, decode_to_exec_jump, decode_to_exec_mem_write_enable, decode_to_exec_alu_input_conf;
     wire [5:0] decode_to_exec_alu_op;
     wire [31:0] decode_to_exec_imm, decode_to_exec_rs1_data, decode_to_exec_rs2_data;
     wire [4:0] decode_to_exec_rd_write_addr;
 
-    wire [31:0] writeback_to_decode_data_out; // TODO: connect to writeback stage
-    wire writeback_to_decode_write_enable; // TODO: connect to writeback stage
-    wire [4:0] writeback_to_decode_write_addr; // TODO: connect to writeback stage
+    wire [31:0] writeback_to_decode_data_out; // fed back from writeback stage
+    wire writeback_to_decode_write_enable; // fed back from writeback stage
+    wire [4:0] writeback_to_decode_write_addr; // fed back from writeback stage
 
     instr_decode decode(
         .clk(clk),
@@ -60,7 +61,8 @@ module datapath (
         .rs2_data(decode_to_exec_rs2_data)
     );
     
-    wire exec_to_memacc_rd_write_enable, exec_to_memacc_res_src, exec_to_memacc_mem_write_enable;
+    wire [1:0] exec_to_memacc_res_src;
+    wire exec_to_memacc_rd_write_enable, exec_to_memacc_mem_write_enable;
     wire [4:0] exec_to_memacc_rd_write_addr;
     wire [31:0] exec_to_memacc_data_out;
     wire [31:0] exec_to_memacc_mem_write_data_out;
@@ -95,8 +97,7 @@ module datapath (
     );
 
     wire [31:0] memacc_to_wb_exec_data_out, memacc_to_wb_mem_data_out, memacc_to_wb_next_pc;
-    wire memacc_to_wb_rd_write_enable, memacc_to_wb_res_src;
-    wire [4:0] memacc_to_wb_rd_write_addr;
+    wire [1:0] memacc_to_wb_res_src;
 
     memacc memacc(
         .clk(clk),
@@ -110,11 +111,21 @@ module datapath (
         .exec_data_out(memacc_to_wb_exec_data_out),
         .mem_data_out(memacc_to_wb_mem_data_out),
         .next_pc_out(memacc_to_wb_next_pc),
-        .rd_write_enable_out(memacc_to_wb_rd_write_enable),
-        .rd_write_addr_out(memacc_to_wb_rd_write_addr),
+        .rd_write_enable_out(writeback_to_decode_write_enable),
+        .rd_write_addr_out(writeback_to_decode_write_addr),
         .res_src_out(memacc_to_wb_res_src)
     );
 
-    
+
+    writeback writeback(
+        .clk(clk),
+        .exec_data_in(memacc_to_wb_exec_data_out),
+        .mem_data_in(memacc_to_wb_mem_data_out),
+        .next_pc(memacc_to_wb_next_pc),
+        .res_src(memacc_to_wb_res_src),
+        .data_out(writeback_to_decode_data_out)
+    );
+
+
 
 endmodule

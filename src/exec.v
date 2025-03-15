@@ -11,7 +11,7 @@ module exec(
     input [31:0] next_pc_in,
     input rd_write_enable,
     input [4:0] rd_write_addr, 
-    input res_src, 
+    input [1:0] res_src, 
     input branch, 
     input jump, 
     input mem_write_enable,
@@ -25,7 +25,7 @@ module exec(
 
     output rd_write_enable_out,
     output [4:0] rd_write_addr_out,
-    output res_src_out,
+    output [1:0] res_src_out,
     output mem_write_enable_out,
     output [31:0] exec_out,
     output [31:0] mem_write_data_out,
@@ -45,7 +45,6 @@ module exec(
     );
 
     alu alu(
-        .clk(clk),
         .a(rs1_data),
         .b(in2),
         .alu_op(alu_op),
@@ -100,7 +99,7 @@ module exec(
     // pipeline registers
     reg rd_write_enable_reg;
     reg [4:0] rd_write_addr_reg;
-    reg res_src_reg;
+    reg [1:0] res_src_reg;
     reg mem_write_enable_reg;
     reg [31:0] exec_out_reg;
     reg [31:0] mem_write_data_reg;
