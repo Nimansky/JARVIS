@@ -94,42 +94,27 @@ module datapath (
         .next_pc_out(exec_to_memacc_next_pc)
     );
 
-
+    wire [31:0] memacc_to_wb_exec_data_out, memacc_to_wb_mem_data_out, memacc_to_wb_next_pc;
+    wire memacc_to_wb_rd_write_enable, memacc_to_wb_res_src;
+    wire [4:0] memacc_to_wb_rd_write_addr;
 
     memacc memacc(
         .clk(clk),
-        .enable(decode_to_memacc_load_store_instr),     // disable the memory access unit if it's not a load/store
-        .addr(exec_to_memacc_out),       // ALU should have computed rs1 + imm for Load/Store instructions
-        .write_enable(decode_to_regfile_rs2_v),    // it's a store instruction if it's a load/store AND rs2 is valid (bc loads dont have rs2)
-        .data_in(regfile_to_exec_rs2_data),         // IFF it's a store, then the data to be stored is the value of rs2
-        .data_out_v(memacc_data_out_v),
-        .data_out(memacc_data_out)
+        .next_pc_in(exec_to_memacc_next_pc),
+        .rd_write_enable_in(exec_to_memacc_rd_write_enable),
+        .rd_write_addr_in(exec_to_memacc_rd_write_addr),
+        .res_src_in(exec_to_memacc_res_src),
+        .exec_data_in(exec_to_memacc_data_out),
+        .mem_write_enable(exec_to_memacc_mem_write_enable),
+        .mem_write_data(exec_to_memacc_mem_write_data_out),
+        .exec_data_out(memacc_to_wb_exec_data_out),
+        .mem_data_out(memacc_to_wb_mem_data_out),
+        .next_pc_out(memacc_to_wb_next_pc),
+        .rd_write_enable_out(memacc_to_wb_rd_write_enable),
+        .rd_write_addr_out(memacc_to_wb_rd_write_addr),
+        .res_src_out(memacc_to_wb_res_src)
     );
 
-    reg memacc_to_writeback_data_out_v;
-    reg [31:0] memacc_to_writeback_data_out;
-
-    always @ (posedge clk) begin
-        memacc_to_writeback_data_out <= memacc_data_out_v ? memacc_data_out : exec_to_memacc_out;
-    end
-
-
-    // TODO: writeback stage here
-
-    assign writeback_write_enable = decode_to_writeback_rd_v;
-    assign writeback_write_addr = decode_to_writeback_rd;
-    assign writeback_data_in = memacc_to_writeback_data_out;
-
-
-    // memacc is last stage as of now (WB stage not implemented yet)
-    always @ (posedge clk) begin
-        out <= memacc_to_writeback_data_out_v ? memacc_to_writeback_data_out : exec_to_memacc_out;
-    end
-
-
-    // new instruction each cycle (no abort condition yet, no branch support yet)
-    always @ (posedge clk) begin
-        pc <= pc + 4;
-    end
+    
 
 endmodule
