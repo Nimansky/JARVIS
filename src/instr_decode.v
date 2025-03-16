@@ -1,6 +1,6 @@
 `include "src/constants.v"
 `include "src/decode_control_unit.v"
-`include "src/extender.v"
+`include "src/imm_extender.v"
 `include "src/regfile.v"
 
 module instr_decode(
@@ -20,6 +20,7 @@ module instr_decode(
     output branch,
     output jump,
     output mem_write_enable,
+    output [2:0] mem_width_out,
     output [5:0] alu_op,
     output alu_input_conf,
     output [31:0] imm,
@@ -34,6 +35,7 @@ module instr_decode(
     wire is_branch;
     wire is_jump;
     wire mem_w_en;
+    wire [2:0] mem_width;
     wire [5:0] op;
     wire alu_input_config;
     wire [2:0] imm_sel;
@@ -50,6 +52,7 @@ module instr_decode(
         .is_branch(is_branch),
         .is_jump(is_jump),
         .mem_write_enable(mem_w_en),
+        .mem_width(mem_width),
         .alu_op(op),
         .alu_input_config(alu_input_config),
         .imm_sel(imm_sel)
@@ -70,7 +73,7 @@ module instr_decode(
 
 
 
-    extender ex(
+    imm_extender ex(
         .in(instr[31:0]),
         .imm_sel(imm_sel),
         .out(imm_v)
@@ -85,6 +88,7 @@ module instr_decode(
     reg branch_reg;
     reg jump_reg;
     reg mem_write_enable_reg;
+    reg [2:0] mem_width_out_reg;
     reg [5:0] alu_op_reg;
     reg alu_input_conf_reg;
     reg [31:0] imm_reg;
@@ -100,6 +104,7 @@ module instr_decode(
         branch_reg <= is_branch;
         jump_reg <= is_jump;
         mem_write_enable_reg <= mem_w_en;
+        mem_width_out_reg <= mem_width;
         alu_op_reg <= op;
         alu_input_conf_reg <= alu_input_config;
         imm_reg <= imm_v;
@@ -117,6 +122,7 @@ module instr_decode(
     assign branch = branch_reg;
     assign jump = jump_reg;
     assign mem_write_enable = mem_write_enable_reg;
+    assign mem_width_out = mem_width_out_reg;
     assign alu_op = alu_op_reg;
     assign alu_input_conf = alu_input_conf_reg;
     assign imm = imm_reg;

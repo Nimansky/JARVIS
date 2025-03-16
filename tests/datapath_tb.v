@@ -10,7 +10,6 @@ module datapath_tb();
         .out(out)
     );
 
-
     integer i;
     initial begin
         $dumpfile("datapath_tb.vcd");

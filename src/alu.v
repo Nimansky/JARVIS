@@ -14,7 +14,9 @@ reg [31:0] alu_out;
 always @ (*) begin
     case (alu_op)
         `ADDI,
-        `ADD: alu_out = a + b;
+        `ADD,
+        `LOAD,
+        `STORE: alu_out = a + b;
         `SLTIU,
         `SLTU: alu_out = (a < b) ? 1 : 0;
         `SLT,

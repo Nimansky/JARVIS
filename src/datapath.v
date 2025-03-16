@@ -33,6 +33,7 @@ module datapath (
     wire [5:0] decode_to_exec_alu_op;
     wire [31:0] decode_to_exec_imm, decode_to_exec_rs1_data, decode_to_exec_rs2_data;
     wire [4:0] decode_to_exec_rd_write_addr;
+    wire [2:0] decode_to_exec_mem_width;
 
     wire [31:0] writeback_to_decode_data_out; // fed back from writeback stage
     wire writeback_to_decode_write_enable; // fed back from writeback stage
@@ -53,6 +54,7 @@ module datapath (
         .res_src(decode_to_exec_res_src),
         .branch(decode_to_exec_branch),
         .jump(decode_to_exec_jump),
+        .mem_width_out(decode_to_exec_mem_width),
         .mem_write_enable(decode_to_exec_mem_write_enable),
         .alu_op(decode_to_exec_alu_op),
         .alu_input_conf(decode_to_exec_alu_input_conf),
@@ -67,6 +69,7 @@ module datapath (
     wire [31:0] exec_to_memacc_data_out;
     wire [31:0] exec_to_memacc_mem_write_data_out;
     wire [31:0] exec_to_memacc_next_pc;
+    wire [2:0] exec_to_memacc_mem_width;
 
     exec exec(
         .clk(clk),
@@ -79,6 +82,7 @@ module datapath (
         .branch(decode_to_exec_branch),
         .jump(decode_to_exec_jump),
         .mem_write_enable(decode_to_exec_mem_write_enable),
+        .mem_width_in(decode_to_exec_mem_width),
         .alu_input_conf(decode_to_exec_alu_input_conf),
         .imm(decode_to_exec_imm),
         .rs1_data(decode_to_exec_rs1_data),
@@ -91,6 +95,7 @@ module datapath (
         .rd_write_addr_out(exec_to_memacc_rd_write_addr),
         .res_src_out(exec_to_memacc_res_src),
         .mem_write_enable_out(exec_to_memacc_mem_write_enable),
+        .mem_width_out(exec_to_memacc_mem_width),
         .exec_out(exec_to_memacc_data_out),
         .mem_write_data_out(exec_to_memacc_mem_write_data_out),
         .next_pc_out(exec_to_memacc_next_pc)
@@ -108,6 +113,7 @@ module datapath (
         .exec_data_in(exec_to_memacc_data_out),
         .mem_write_enable(exec_to_memacc_mem_write_enable),
         .mem_write_data(exec_to_memacc_mem_write_data_out),
+        .mem_width(exec_to_memacc_mem_width),
         .exec_data_out(memacc_to_wb_exec_data_out),
         .mem_data_out(memacc_to_wb_mem_data_out),
         .next_pc_out(memacc_to_wb_next_pc),

@@ -15,6 +15,7 @@ module exec(
     input branch, 
     input jump, 
     input mem_write_enable,
+    input [2:0] mem_width_in,
     input alu_input_conf,
     input [31:0] imm, 
     input [31:0] rs1_data, 
@@ -27,6 +28,7 @@ module exec(
     output [4:0] rd_write_addr_out,
     output [1:0] res_src_out,
     output mem_write_enable_out,
+    output [2:0] mem_width_out,
     output [31:0] exec_out,
     output [31:0] mem_write_data_out,
     output [31:0] next_pc_out
@@ -52,10 +54,10 @@ module exec(
         .a_less_b(a_less_b)
     );
 
-    mux adder_in_mux(       // JALR jumps to rs1 + imm, all other jumps/branches to PC + imm => MUX to select between rs1 and PC
+    mux adder_in_mux(       // JALR adds rs1 + imm, AUIPC and all other jumps/branches add PC + imm => MUX to select between rs1 and PC
         .a(pc_in),
         .b(rs1_data),
-        .sel(alu_op == `JALR),
+        .sel(alu_op == `JALR || alu_op == `AUIPC),
         .out(adder_in)
     );
 
@@ -66,6 +68,7 @@ module exec(
     );
 
     reg [31:0] out;
+    reg [2:0] mem_width;
     always @ (*) begin
         case (alu_op)
             `ADDI,
@@ -86,9 +89,11 @@ module exec(
             `SRL,
             `SRLI,
             `SRA,
-            `SRAI: begin
-                out = res_alu;
-            end
+            `SRAI,
+            `LOAD,
+            `STORE: out = res_alu;
+            `AUIPC: out = tgt_plus_offset;
+            `LUI: out = imm;
             default: out = 0;
         endcase
     end
@@ -103,6 +108,7 @@ module exec(
     reg mem_write_enable_reg;
     reg [31:0] exec_out_reg;
     reg [31:0] mem_write_data_reg;
+    reg [2:0] mem_width_out_reg;
     reg [31:0] next_pc_reg;
 
     always @ (posedge clk) begin
@@ -111,6 +117,7 @@ module exec(
         res_src_reg <= res_src;
         mem_write_enable_reg <= mem_write_enable;
 
+        mem_width_out_reg <= mem_width_in;
         exec_out_reg <= out;
         mem_write_data_reg <= rs2_data;
         next_pc_reg <= next_pc_in;
@@ -122,6 +129,7 @@ module exec(
     assign mem_write_enable_out = mem_write_enable_reg;
     assign exec_out = exec_out_reg;
     assign mem_write_data_out = mem_write_data_reg;
+    assign mem_width_out = mem_width_out_reg;
     assign next_pc_out = next_pc_reg;
 
 endmodule

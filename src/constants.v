@@ -30,9 +30,26 @@
 `define BLTU 6'b011011
 `define BGE 6'b011100
 `define BGEU 6'b011101
-`define LOAD 6'b011110
-`define STORE 6'b011111
-`define FENCE 6'b100000
-`define ECALL 6'b100001
-`define EBREAK 6'b100010
+`define FENCE 6'b011110
+`define ECALL 6'b011111
+`define EBREAK 6'b100000
+`define LOAD 6'b100001
+`define STORE 6'b100010
+
+// memory widths (correspond to funct3 bits of load/store instructions)
+`define BYTE 3'b000
+`define HWORD 3'b001
+`define WORD 3'b010
+`define BYTEU 3'b100
+`define HWORDU 3'b101
+
+// backup
+// `define LB 6'b100001
+// `define LH 6'b100010
+// `define LW 6'b100011
+// `define LBU 6'b100100
+// `define LHU 6'b100101
+// `define SB 6'b100110
+// `define SH 6'b100111
+// `define SW 6'b101000
 `endif

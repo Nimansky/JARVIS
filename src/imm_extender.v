@@ -1,7 +1,7 @@
-`ifndef EXTENDER
-`define EXTENDER
+`ifndef IMM_EXTENDER
+`define IMM_EXTENDER
 
-module extender(
+module imm_extender(
     input [31:0] in,
     input [2:0] imm_sel,
     output [31:0] out

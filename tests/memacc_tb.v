@@ -8,7 +8,8 @@ module memacc_tb();
     reg [31:0] data_in;
 
     wire [31:0] exec_data_out, mem_data_out, next_pc;
-    wire rd_write_enable, res_src;
+    wire rd_write_enable;
+    wire [1:0] res_src;
     wire [4:0] rd_write_addr;
 
     memacc memacc(
@@ -20,6 +21,7 @@ module memacc_tb();
         .exec_data_in(addr),
         .mem_write_enable(write_enable),
         .mem_write_data(data_in),
+        .mem_width(3'b010),     // word, i.e. 32b
 
         .exec_data_out(exec_data_out),
         .mem_data_out(mem_data_out),
