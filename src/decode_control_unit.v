@@ -20,6 +20,14 @@ module decode_control_unit(
                         case (instr[31:25]) 
                             default: begin
                                 // ??
+                                reg_write_enable = 0;
+                                result_src = 0;         // alu
+                                is_branch = 0;
+                                is_jump = 0;
+                                mem_write_enable = 0;
+                                alu_op = `NOP;          // ALU does nothing
+                                alu_input_config = 0;        // doesnt matter since NOP
+                                imm_sel = 0;            // imm_i
                             end
                             7'b0000000: begin
                                 // ADD
@@ -45,6 +53,14 @@ module decode_control_unit(
                         case (instr[31:25])
                             default: begin
                                 // ??
+                                reg_write_enable = 0;
+                                result_src = 0;         // alu
+                                is_branch = 0;
+                                is_jump = 0;
+                                mem_write_enable = 0;
+                                alu_op = `NOP;          // ALU does nothing
+                                alu_input_config = 0;        // doesnt matter since NOP
+                                imm_sel = 0;            // imm_i
                             end
                             7'b0000000: begin
                                 // SRL
@@ -70,6 +86,7 @@ module decode_control_unit(
                         reg_write_enable = 1;
                         result_src = 0;
                         is_branch = 0;
+                        mem_write_enable = 0;
                         is_jump = 0;
                         alu_input_config = 0;
                         imm_sel = 0;
@@ -90,6 +107,14 @@ module decode_control_unit(
                         case (instr[31:25])
                             default: begin
                                 // ??
+                                reg_write_enable = 0;
+                                result_src = 0;         // alu
+                                is_branch = 0;
+                                is_jump = 0;
+                                mem_write_enable = 0;
+                                alu_op = `NOP;          // ALU does nothing
+                                alu_input_config = 0;        // doesnt matter since NOP
+                                imm_sel = 0;            // imm_i
                             end
                             7'b0000000: begin
                                 // SRLI
@@ -126,6 +151,14 @@ module decode_control_unit(
                     end
                     default: begin
                         // ??
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu
+                        is_branch = 0;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `NOP;          // ALU does nothing
+                        alu_input_config = 0;        // doesnt matter since NOP
+                        imm_sel = 0;            // imm_i
                     end
                 endcase
             end
@@ -142,6 +175,14 @@ module decode_control_unit(
                     end
                     default: begin
                         // ??
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu
+                        is_branch = 0;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `NOP;          // ALU does nothing
+                        alu_input_config = 0;        // doesnt matter since NOP
+                        imm_sel = 0;            // imm_i
                     end
                 endcase
             end
@@ -149,32 +190,104 @@ module decode_control_unit(
                 case (instr[14:12])
                     3'b000: begin
                         // BEQ
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BEQ;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     3'b001: begin
                         // BNE
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BNE;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     3'b100: begin
                         // BLT
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BLT;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     3'b101: begin
                         // BGE
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BGE;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     3'b110: begin
                         // BLTU
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BLTU;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     3'b111: begin
                         // BGEU
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu (doesn't matter)
+                        is_branch = 1;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `BGEU;          // ALU calculates branch condition
+                        alu_input_config = 1;        // rs1 and rs2
+                        imm_sel = 3;            // imm_b
                     end
                     default: begin
                         // ??
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu
+                        is_branch = 0;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `NOP;          // ALU does nothing
+                        alu_input_config = 0;        // doesnt matter since NOP
+                        imm_sel = 0;            // imm_i
                     end
                 endcase
             end
             7'b1100111: begin
                 // JALR
+                reg_write_enable = 1;
+                result_src = 2;         // next_pc
+                is_branch = 0;
+                is_jump = 1;
+                mem_write_enable = 0;
+                alu_op = `JALR;          // ALU does nothing
+                alu_input_config = 0;        // doesnt matter
+                imm_sel = 0;            // imm_i
             end
             7'b1101111: begin
                 // JAL
+                reg_write_enable = 1;
+                result_src = 2;         // next_pc
+                is_branch = 0;
+                is_jump = 1;
+                mem_write_enable = 0;
+                alu_op = `JAL;          // ALU does nothing
+                alu_input_config = 0;        // doesnt matter
+                imm_sel = 2;            // imm_j
             end
             7'b0110111: begin
                 // LUI
@@ -192,11 +305,27 @@ module decode_control_unit(
                     end
                     default: begin
                         // ??
+                        reg_write_enable = 0;
+                        result_src = 0;         // alu
+                        is_branch = 0;
+                        is_jump = 0;
+                        mem_write_enable = 0;
+                        alu_op = `NOP;          // ALU does nothing
+                        alu_input_config = 0;        // doesnt matter since NOP
+                        imm_sel = 0;            // imm_i
                     end
                 endcase
             end
             default: begin
-                // ??
+                // ?
+                reg_write_enable = 0;
+                result_src = 0;         // alu
+                is_branch = 0;
+                is_jump = 0;
+                mem_write_enable = 0;
+                alu_op = `NOP;          // ALU does nothing
+                alu_input_config = 0;        // doesnt matter since NOP
+                imm_sel = 0;            // imm_i
             end
         endcase
     end

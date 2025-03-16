@@ -54,13 +54,13 @@ module exec(
 
     mux adder_in_mux(       // JALR jumps to rs1 + imm, all other jumps/branches to PC + imm => MUX to select between rs1 and PC
         .a(pc_in),
-        .b(imm),
+        .b(rs1_data),
         .sel(alu_op == `JALR),
         .out(adder_in)
     );
 
     pc_adder pc_adder(
-        .a(pc_in),
+        .a(adder_in),
         .b(imm),
         .out(tgt_plus_offset)
     );
