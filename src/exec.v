@@ -21,6 +21,11 @@ module exec(
     input [31:0] rs1_data, 
     input [31:0] rs2_data,
 
+    input [1:0] forward_rs1,
+    input [1:0] forward_rs2,
+    input [31:0] mem_forward,
+    input [31:0] wb_forward,
+
     output [31:0] target_pc,
     output pc_src,
 
@@ -39,15 +44,28 @@ module exec(
     wire [31:0] res_alu, in2, adder_in, tgt_plus_offset;
     wire a_less_b;
 
+    wire [31:0] rs1_data_fwd, rs2_data_fwd;
+
+    // these could potentially be 3-way-muxes if that'd be more practical for synthesis 
+    assign rs1_data_fwd = forward_rs1 == 2'b10 ? wb_forward : 
+                        forward_rs1 == 2'b01 ? mem_forward : 
+                        forward_rs1 == 2'b00 ? rs1_data : 
+                        32'h0;    // return 0 if invalid forward_rs1
+
+    assign rs2_data_fwd = forward_rs2 == 2'b10 ? wb_forward : 
+                        forward_rs2 == 2'b01 ? mem_forward : 
+                        forward_rs2 == 2'b00 ? rs2_data : 
+                        32'h0;    // return 0 if invalid forward_rs2
+
     mux in2_mux(
         .a(imm),
-        .b(rs2_data),
+        .b(rs2_data_fwd),
         .sel(alu_input_conf),
         .out(in2)
     );
 
     alu alu(
-        .a(rs1_data),
+        .a(rs1_data_fwd),
         .b(in2),
         .alu_op(alu_op),
         .result(res_alu),
@@ -56,7 +74,7 @@ module exec(
 
     mux adder_in_mux(       // JALR adds rs1 + imm, AUIPC and all other jumps/branches add PC + imm => MUX to select between rs1 and PC
         .a(pc_in),
-        .b(rs1_data),
+        .b(rs1_data_fwd),
         .sel(alu_op == `JALR || alu_op == `AUIPC),
         .out(adder_in)
     );
@@ -119,7 +137,7 @@ module exec(
 
         mem_width_out_reg <= mem_width_in;
         exec_out_reg <= out;
-        mem_write_data_reg <= rs2_data;
+        mem_write_data_reg <= rs2_data_fwd;
         next_pc_reg <= next_pc_in;
     end
 

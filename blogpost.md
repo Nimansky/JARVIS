@@ -230,6 +230,16 @@ In a later iteration, all the pipeline register logic is refactored into the sta
 With that last part (the datapath unit) out of the way, the processor works as intended!  
 ...almost. Hazards completely break the machine state and lead to unpredictable/unintended/weird results. This of course is to be expected, since we currently run a pipelined execution model with no special treatment of data hazards. We therefore have to implement hazard handling in a special part of the hardware, the *hazard unit*.
 
+The core principle is the following: The hazard unit tracks which registers are written to by instructions that are currently in stages 4 or 5 (MA/WB) and compares them against all registers whose values are currently being used in stage 3 (EX). If there is a match, that means that the value of the instruction currently in stage 4 or 5 should be forwarded back to stage 3 for usage immediately, so the instruction in stage 3 uses the correct value for its computation. 
+
+- [ ] TODO: maybe an illustration of the adjusted datapath?
+
+# Latency Considerations 
+
+Down the line, the processor will be extended by a real memory controller as well as a MUL/DIV unit. However, both MUL/DIV and real memory accesses are *multi-cycle operations*. Currently, the pipeline operates on the premise that each stage takes exactly 1 cycle to complete. Therefore the pipeline design needs to be adjusted to account for these multi-cycle operations. The most fundamental change that I need to make here is to allow for *pipeline stalls*. In other words: when a respective signal is driven high, all pipeline stage units should pause and hold their current state until the signal becomes low again.  
+More advanced pipeline implementations additionally employ techniques such as instruction reordering to hide the resulting latencies (i.e. the cycles in which no instructions are being processed due to the stall), however for complexity's sake, I choose not to do so.
+
+The implementation is fairly straight-forward: Establish a single signal (like a bus), supplied to every pipeline stage, and have the stages react to that signal, i.e. stop execution when it is high.
 
 # Problems I ran into
 

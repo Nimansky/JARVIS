@@ -3,6 +3,7 @@
 `include "src/exec.v"
 `include "src/memacc.v"
 `include "src/writeback.v"
+`include "src/hazard_unit.v"
 
 module datapath (
     input clk,
@@ -32,7 +33,7 @@ module datapath (
     wire decode_to_exec_rd_write_enable, decode_to_exec_branch, decode_to_exec_jump, decode_to_exec_mem_write_enable, decode_to_exec_alu_input_conf;
     wire [5:0] decode_to_exec_alu_op;
     wire [31:0] decode_to_exec_imm, decode_to_exec_rs1_data, decode_to_exec_rs2_data;
-    wire [4:0] decode_to_exec_rd_write_addr;
+    wire [4:0] decode_to_hazard_rs1_addr, decode_to_hazard_rs2_addr, decode_to_exec_rd_write_addr;
     wire [2:0] decode_to_exec_mem_width;
 
     wire [31:0] writeback_to_decode_data_out; // fed back from writeback stage
@@ -59,7 +60,9 @@ module datapath (
         .alu_op(decode_to_exec_alu_op),
         .alu_input_conf(decode_to_exec_alu_input_conf),
         .imm(decode_to_exec_imm),
+        .rs1_addr(decode_to_hazard_rs1_addr),
         .rs1_data(decode_to_exec_rs1_data),
+        .rs2_addr(decode_to_hazard_rs2_addr),
         .rs2_data(decode_to_exec_rs2_data)
     );
     
@@ -70,6 +73,7 @@ module datapath (
     wire [31:0] exec_to_memacc_mem_write_data_out;
     wire [31:0] exec_to_memacc_next_pc;
     wire [2:0] exec_to_memacc_mem_width;
+    wire [1:0] hazard_to_exec_forward_rs1, hazard_to_exec_forward_rs2;
 
     exec exec(
         .clk(clk),
@@ -87,6 +91,11 @@ module datapath (
         .imm(decode_to_exec_imm),
         .rs1_data(decode_to_exec_rs1_data),
         .rs2_data(decode_to_exec_rs2_data),
+
+        .forward_rs1(hazard_to_exec_forward_rs1),
+        .forward_rs2(hazard_to_exec_forward_rs2),
+        .mem_forward(exec_to_memacc_data_out),
+        .wb_forward(memacc_to_wb_exec_data_out),
 
         .target_pc(exec_to_fetch_target_pc),
         .pc_src(exec_to_fetch_pc_src),
@@ -132,6 +141,20 @@ module datapath (
         .data_out(writeback_to_decode_data_out)
     );
 
+    hazard_unit hazard_unit(
+        .clk(clk),
+        .exec_rs1_addr(decode_to_hazard_rs1_addr),
+        .exec_rs2_addr(decode_to_hazard_rs2_addr),
+
+        .mem_rd_addr(exec_to_memacc_rd_write_addr),
+        .mem_rd_write_enable(exec_to_memacc_rd_write_enable),
+
+        .wb_rd_addr(writeback_to_decode_write_addr),
+        .wb_rd_write_enable(writeback_to_decode_write_enable),
+
+        .forward_rs1(hazard_to_exec_forward_rs1),
+        .forward_rs2(hazard_to_exec_forward_rs2)
+    );
 
 
 endmodule

@@ -24,7 +24,9 @@ module instr_decode(
     output [5:0] alu_op,
     output alu_input_conf,
     output [31:0] imm,
+    output [4:0] rs1_addr,
     output [31:0] rs1_data,
+    output [4:0] rs2_addr,
     output [31:0] rs2_data,
     output [4:0] rd_write_addr
 );
@@ -92,7 +94,9 @@ module instr_decode(
     reg [5:0] alu_op_reg;
     reg alu_input_conf_reg;
     reg [31:0] imm_reg;
+    reg [4:0] rs1_addr_reg;
     reg [31:0] rs1_data_reg;
+    reg [4:0] rs2_addr_reg;
     reg [31:0] rs2_data_reg;
     reg [31:0] pc_reg;
     reg [31:0] next_pc_reg;
@@ -108,7 +112,9 @@ module instr_decode(
         alu_op_reg <= op;
         alu_input_conf_reg <= alu_input_config;
         imm_reg <= imm_v;
+        rs1_addr_reg <= instr[19:15];
         rs1_data_reg <= rs1_d;
+        rs2_addr_reg <= instr[24:20];
         rs2_data_reg <= rs2_d;
         pc_reg <= pc_in;
         next_pc_reg <= next_pc_in;
@@ -126,7 +132,9 @@ module instr_decode(
     assign alu_op = alu_op_reg;
     assign alu_input_conf = alu_input_conf_reg;
     assign imm = imm_reg;
+    assign rs1_addr = rs1_addr_reg;
     assign rs1_data = rs1_data_reg;
+    assign rs2_addr = rs2_addr_reg;
     assign rs2_data = rs2_data_reg;
 
 endmodule;
