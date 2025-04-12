@@ -234,12 +234,19 @@ The core principle is the following: The hazard unit tracks which registers are 
 
 - [ ] TODO: maybe an illustration of the adjusted datapath?
 
-# Latency Considerations 
+# Stalling 
 
 Down the line, the processor will be extended by a real memory controller as well as a MUL/DIV unit. However, both MUL/DIV and real memory accesses are *multi-cycle operations*. Currently, the pipeline operates on the premise that each stage takes exactly 1 cycle to complete. Therefore the pipeline design needs to be adjusted to account for these multi-cycle operations. The most fundamental change that I need to make here is to allow for *pipeline stalls*. In other words: when a respective signal is driven high, all pipeline stage units should pause and hold their current state until the signal becomes low again.  
 More advanced pipeline implementations additionally employ techniques such as instruction reordering to hide the resulting latencies (i.e. the cycles in which no instructions are being processed due to the stall), however for complexity's sake, I choose not to do so.
 
 The implementation is fairly straight-forward: Establish a single signal (like a bus), supplied to every pipeline stage, and have the stages react to that signal, i.e. stop execution when it is high.
+
+- [ ] TODO: maybe an illustration of the adjusted datapath? 
+
+# Flushing
+
+We have already implemented jumps and branches. However, without any prediction logic, as it currently stands, the 2 instructions in the IF and ID stage may be invalid once a branch is taken in the EX stage; therefore, we need to _flush_ the IF and ID stages (i.e. reset all their values to 0; equivalent to inserting a NOP).  
+To that end, we declare a flush signal for each stage. As of now, the IF and ID flushes are driven when a jump or branch is taken in EX, and the flushes for the other stages are never driven, since there is no need yet. It might however become necessary later when implementing traps or exceptions, so I declared the signals regardless.
 
 # Problems I ran into
 

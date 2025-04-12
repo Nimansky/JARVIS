@@ -3,6 +3,9 @@
 
 module memacc(
     input clk,
+    input reset,
+    input flush,
+    input stall,
     
     input [31:0] next_pc_in,
     input rd_write_enable_in, 
@@ -48,13 +51,22 @@ module memacc(
     reg [4:0] rd_write_addr_out_reg;
     reg [1:0] res_src_out_reg;
 
-    always @ (posedge clk) begin
-        exec_data_out_reg <= exec_data_in;
-        mem_data_out_reg <= mem_data_ext;
-        next_pc_out_reg <= next_pc_in;
-        rd_write_enable_out_reg <= rd_write_enable_in;
-        rd_write_addr_out_reg <= rd_write_addr_in;
-        res_src_out_reg <= res_src_in;
+    always @ (posedge clk or negedge reset) begin
+        if (flush == 1'b1 || reset == 1'b0) begin
+            exec_data_out_reg <= 32'h00000000;
+            mem_data_out_reg <= 32'h00000000;
+            next_pc_out_reg <= 32'h00000000;
+            rd_write_enable_out_reg <= 1'b0;
+            rd_write_addr_out_reg <= 5'b00000;
+            res_src_out_reg <= 2'b00;
+        end else if (!stall) begin
+            exec_data_out_reg <= exec_data_in;
+            mem_data_out_reg <= mem_data_ext;
+            next_pc_out_reg <= next_pc_in;
+            rd_write_enable_out_reg <= rd_write_enable_in;
+            rd_write_addr_out_reg <= rd_write_addr_in;
+            res_src_out_reg <= res_src_in;
+        end
     end
 
     assign exec_data_out = exec_data_out_reg;

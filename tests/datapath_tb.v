@@ -3,10 +3,12 @@
 module datapath_tb();
 
     reg clk;
+    reg reset;
     wire [31:0] out;
 
     datapath datapath(
         .clk(clk),
+        .reset(reset),
         .out(out)
     );
 
@@ -14,6 +16,8 @@ module datapath_tb();
     initial begin
         $dumpfile("datapath_tb.vcd");
         $dumpvars();
+        reset = 0;
+        reset = 1;
         clk = 0;
 
         for(i = 0; i < 15; i++) begin

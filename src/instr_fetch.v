@@ -5,6 +5,9 @@
 
 module instr_fetch(
     input clk,
+    input reset,
+    input flush,
+    input stall,
     input [31:0] pc_target_exec,
     input pc_src_exec,
     output wire [31:0] instr_decode,
@@ -48,10 +51,16 @@ module instr_fetch(
     reg [31:0] pc_reg;
     reg [31:0] next_pc_reg;
 
-    always @ (posedge clk) begin
-        fetched_instr_reg <= fetched_instr;
-        pc_reg <= pc;
-        next_pc_reg <= next_pc;
+    always @ (posedge clk or negedge reset) begin
+        if (flush == 1'b1 || reset == 1'b0) begin
+            fetched_instr_reg <= 32'h00000000;
+            pc_reg <= 32'h00000000;
+            next_pc_reg <= 32'h00000000;
+        end else if (!stall) begin
+            fetched_instr_reg <= fetched_instr;
+            pc_reg <= pc;
+            next_pc_reg <= next_pc;
+        end
     end
 
     // assign pipeline registers to outputs

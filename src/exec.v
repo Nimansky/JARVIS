@@ -5,6 +5,9 @@
 
 module exec(
     input clk,
+    input reset,
+    input flush,
+    input stall,
 
     input [5:0] alu_op,
     input [31:0] pc_in, 
@@ -129,16 +132,28 @@ module exec(
     reg [2:0] mem_width_out_reg;
     reg [31:0] next_pc_reg;
 
-    always @ (posedge clk) begin
-        rd_write_enable_reg <= rd_write_enable;
-        rd_write_addr_reg <= rd_write_addr;
-        res_src_reg <= res_src;
-        mem_write_enable_reg <= mem_write_enable;
-
-        mem_width_out_reg <= mem_width_in;
-        exec_out_reg <= out;
-        mem_write_data_reg <= rs2_data_fwd;
-        next_pc_reg <= next_pc_in;
+    always @ (posedge clk or negedge reset) begin
+        if (flush == 1'b1 || reset == 1'b0) begin
+            rd_write_enable_reg <= 1'b0;
+            rd_write_addr_reg <= 5'b00000;
+            res_src_reg <= 2'b00;
+            mem_write_enable_reg <= 1'b0;
+    
+            mem_width_out_reg <= 3'b000;
+            exec_out_reg <= 32'h00000000;
+            mem_write_data_reg <= 32'h00000000;
+            next_pc_reg <= 32'h00000000;
+        end else if (!stall) begin
+            rd_write_enable_reg <= rd_write_enable;
+            rd_write_addr_reg <= rd_write_addr;
+            res_src_reg <= res_src;
+            mem_write_enable_reg <= mem_write_enable;
+    
+            mem_width_out_reg <= mem_width_in;
+            exec_out_reg <= out;
+            mem_write_data_reg <= rs2_data_fwd;
+            next_pc_reg <= next_pc_in;
+        end
     end
 
     assign rd_write_enable_out = rd_write_enable_reg;

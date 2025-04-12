@@ -7,8 +7,17 @@
 
 module datapath (
     input clk,
+    input reset,
     output reg [31:0] out
 );
+
+    wire stall = 0; // we should stall for IMem and DMem accesses and other multi cycle ops, but we don't have any of those yet + mems are modeled as single cycle accesses
+
+    wire if_flush = exec_to_fetch_pc_src;
+    wire id_flush = exec_to_fetch_pc_src;
+    wire exec_flush = 0;    // so far there's no case where we flush exec, ma or wb
+    wire ma_flush = 0;
+    wire wb_flush = 0;
 
     // concept for all stages:
     // wire for all outputs
@@ -21,6 +30,9 @@ module datapath (
 
     instr_fetch instr_fetch(
         .clk(clk),
+        .reset(reset),
+        .flush(if_flush),
+        .stall(stall),
         .pc_target_exec(exec_to_fetch_target_pc),  
         .pc_src_exec(exec_to_fetch_pc_src),            // 0 means PC should be incremented by 4 - needs output from exec
         .instr_decode(fetch_to_decode_instr),
@@ -42,6 +54,9 @@ module datapath (
 
     instr_decode decode(
         .clk(clk),
+        .reset(reset),
+        .flush(id_flush),
+        .stall(stall),
         .instr(fetch_to_decode_instr),
         .pc_in(fetch_to_decode_pc),
         .next_pc_in(fetch_to_decode_next_pc),
@@ -77,6 +92,9 @@ module datapath (
 
     exec exec(
         .clk(clk),
+        .reset(reset),
+        .flush(exec_flush),
+        .stall(stall),
         .alu_op(decode_to_exec_alu_op),
         .pc_in(decode_to_exec_pc),
         .next_pc_in(decode_to_exec_next_pc),
@@ -115,6 +133,9 @@ module datapath (
 
     memacc memacc(
         .clk(clk),
+        .reset(reset),
+        .flush(ma_flush),
+        .stall(stall),
         .next_pc_in(exec_to_memacc_next_pc),
         .rd_write_enable_in(exec_to_memacc_rd_write_enable),
         .rd_write_addr_in(exec_to_memacc_rd_write_addr),
@@ -131,9 +152,11 @@ module datapath (
         .res_src_out(memacc_to_wb_res_src)
     );
 
-
     writeback writeback(
         .clk(clk),
+        .reset(reset),
+        .flush(wb_flush),
+        .stall(stall),
         .exec_data_in(memacc_to_wb_exec_data_out),
         .mem_data_in(memacc_to_wb_mem_data_out),
         .next_pc(memacc_to_wb_next_pc),

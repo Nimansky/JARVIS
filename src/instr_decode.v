@@ -5,6 +5,9 @@
 
 module instr_decode(
     input clk,
+    input reset,
+    input flush,
+    input stall,
     input [31:0] instr,
     input [31:0] pc_in,
     input [31:0] next_pc_in,
@@ -101,23 +104,42 @@ module instr_decode(
     reg [31:0] pc_reg;
     reg [31:0] next_pc_reg;
 
-    always @ (posedge clk) begin
-        rd_write_enable_reg <= rd_write_en;
-        rd_write_addr_reg <= instr[11:7];
-        res_src_reg <= result_src;
-        branch_reg <= is_branch;
-        jump_reg <= is_jump;
-        mem_write_enable_reg <= mem_w_en;
-        mem_width_out_reg <= mem_width;
-        alu_op_reg <= op;
-        alu_input_conf_reg <= alu_input_config;
-        imm_reg <= imm_v;
-        rs1_addr_reg <= instr[19:15];
-        rs1_data_reg <= rs1_d;
-        rs2_addr_reg <= instr[24:20];
-        rs2_data_reg <= rs2_d;
-        pc_reg <= pc_in;
-        next_pc_reg <= next_pc_in;
+    always @ (posedge clk or negedge reset) begin
+        if (flush == 1'b1 || reset == 1'b0) begin
+            rd_write_enable_reg <= 1'b0;
+            rd_write_addr_reg <= 5'b00000;
+            res_src_reg <= 2'b00;
+            branch_reg <= 1'b0;
+            jump_reg <= 1'b0;
+            mem_write_enable_reg <= 1'b0;
+            mem_width_out_reg <= 3'b000;
+            alu_op_reg <= 6'b000000;
+            alu_input_conf_reg <= 1'b0;
+            imm_reg <= 32'h00000000;
+            rs1_addr_reg <= 5'b00000;
+            rs1_data_reg <= 32'h00000000;
+            rs2_addr_reg <= 5'b00000;
+            rs2_data_reg <= 32'h00000000;
+            pc_reg <= 32'h00000000;
+            next_pc_reg <= 32'h00000000;
+        end else if (!stall) begin
+            rd_write_enable_reg <= rd_write_en;
+            rd_write_addr_reg <= instr[11:7];
+            res_src_reg <= result_src;
+            branch_reg <= is_branch;
+            jump_reg <= is_jump;
+            mem_write_enable_reg <= mem_w_en;
+            mem_width_out_reg <= mem_width;
+            alu_op_reg <= op;
+            alu_input_conf_reg <= alu_input_config;
+            imm_reg <= imm_v;
+            rs1_addr_reg <= instr[19:15];
+            rs1_data_reg <= rs1_d;
+            rs2_addr_reg <= instr[24:20];
+            rs2_data_reg <= rs2_d;
+            pc_reg <= pc_in;
+            next_pc_reg <= next_pc_in;
+        end
     end
 
     assign pc_out = pc_reg;

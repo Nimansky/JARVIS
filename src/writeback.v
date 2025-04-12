@@ -1,5 +1,8 @@
 module writeback(
     input clk,
+    input reset,
+    input flush,
+    input stall,
 
     input [31:0] exec_data_in,
     input [31:0] mem_data_in,
