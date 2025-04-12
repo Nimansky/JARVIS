@@ -23,8 +23,8 @@ module regfile
         if (write_enable) begin
             regs[write_addr] = data_in;
         end 
-        data_out1 = regs[read_addr1];
-        data_out2 = regs[read_addr2];
+        data_out1 = read_addr1 == 0 ? 32'h00000000 : regs[read_addr1];
+        data_out2 = read_addr2 == 0 ? 32'h00000000 : regs[read_addr2];
     end
     
 endmodule
