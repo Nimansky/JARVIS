@@ -17,6 +17,7 @@ If the above is implemented sufficiently and if time still permits, implement so
 
 - Use Verilator 5.019 for simulation
 - For now, Data and Instruction memories have been implemented as byte-addressable. However, RISC-V allows only for aligned accesses on IMem (and I could choose to do the same for DMem). So I will need to implement an exception for unallowed unaligned accesses.
+- For verification, I should probably do some sort of variation on the lockstep verification methodology using RISC-V test programs and a RISC-V VP; to that end, I probably have to implement the RVFI in my design (or at least something similar)
 
 ...
 
@@ -270,3 +271,4 @@ To that end, we declare a flush signal for each stage. As of now, the IF and ID 
 - after implementing the datapath:
     - pipeline works as intended! however, hazards completely break the machine state
         - **solution**: implement a Hazard Unit
+- I had severe issues with using old values from regs because I forgot that regfile reads are asynchronous, only the writes are clock-synchornous

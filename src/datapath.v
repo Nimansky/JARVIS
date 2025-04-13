@@ -7,11 +7,18 @@
 
 module datapath (
     input clk,
-    input reset,
-    output reg [31:0] out
+    input reset
+    // TODO: add interface signals for stuff like IMem/DMem interface, I/O ports, etc.
 );
 
-    wire stall = 0; // we should stall for IMem and DMem accesses and other multi cycle ops, but we don't have any of those yet + mems are modeled as single cycle accesses
+    // we should stall for IMem and DMem accesses and other multi cycle ops
+    // we don't have any multicycle ops yet
+    // so for now: stall just 1 cycle for single cycle mem accesses (i.e. for our mem models)
+    wire if_stall = exec_to_memacc_res_src == 1; // we need to stall if ma stage contains a load/store
+    wire id_stall = exec_to_memacc_res_src == 1; 
+    wire exec_stall = exec_to_memacc_res_src == 1;
+    wire ma_stall = 0;  // we don't have any multicycle ops yet
+    wire wb_stall = 0;  // we don't have any multicycle ops yet
 
     wire if_flush = exec_to_fetch_pc_src;
     wire id_flush = exec_to_fetch_pc_src;
@@ -32,7 +39,7 @@ module datapath (
         .clk(clk),
         .reset(reset),
         .flush(if_flush),
-        .stall(stall),
+        .stall(if_stall),
         .pc_target_exec(exec_to_fetch_target_pc),  
         .pc_src_exec(exec_to_fetch_pc_src),            // 0 means PC should be incremented by 4 - needs output from exec
         .instr_decode(fetch_to_decode_instr),
@@ -56,7 +63,7 @@ module datapath (
         .clk(clk),
         .reset(reset),
         .flush(id_flush),
-        .stall(stall),
+        .stall(id_stall),
         .instr(fetch_to_decode_instr),
         .pc_in(fetch_to_decode_pc),
         .next_pc_in(fetch_to_decode_next_pc),
@@ -94,7 +101,7 @@ module datapath (
         .clk(clk),
         .reset(reset),
         .flush(exec_flush),
-        .stall(stall),
+        .stall(exec_stall),
         .alu_op(decode_to_exec_alu_op),
         .pc_in(decode_to_exec_pc),
         .next_pc_in(decode_to_exec_next_pc),
@@ -113,7 +120,7 @@ module datapath (
         .forward_rs1(hazard_to_exec_forward_rs1),
         .forward_rs2(hazard_to_exec_forward_rs2),
         .mem_forward(exec_to_memacc_data_out),
-        .wb_forward(memacc_to_wb_exec_data_out),
+        .wb_forward(writeback_to_decode_data_out),  //memacc_to_wb_exec_data_out
 
         .target_pc(exec_to_fetch_target_pc),
         .pc_src(exec_to_fetch_pc_src),
@@ -135,7 +142,7 @@ module datapath (
         .clk(clk),
         .reset(reset),
         .flush(ma_flush),
-        .stall(stall),
+        .stall(ma_stall),
         .next_pc_in(exec_to_memacc_next_pc),
         .rd_write_enable_in(exec_to_memacc_rd_write_enable),
         .rd_write_addr_in(exec_to_memacc_rd_write_addr),
@@ -156,7 +163,7 @@ module datapath (
         .clk(clk),
         .reset(reset),
         .flush(wb_flush),
-        .stall(stall),
+        .stall(wb_stall),
         .exec_data_in(memacc_to_wb_exec_data_out),
         .mem_data_in(memacc_to_wb_mem_data_out),
         .next_pc(memacc_to_wb_next_pc),
