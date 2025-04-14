@@ -43,13 +43,4 @@
 `define BYTEU 3'b100
 `define HWORDU 3'b101
 
-// backup
-// `define LB 6'b100001
-// `define LH 6'b100010
-// `define LW 6'b100011
-// `define LBU 6'b100100
-// `define LHU 6'b100101
-// `define SB 6'b100110
-// `define SH 6'b100111
-// `define SW 6'b101000
 `endif

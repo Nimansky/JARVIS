@@ -43,7 +43,7 @@ run_exec_tb:
 datapath_tb: build_datapath_tb run_datapath_tb
 
 build_datapath_tb:
-	verilator tests/datapath_tb.v --timing --binary -j 0 --trace
+	verilator tests/datapath_tb.v --timing --binary -j 0 --trace -DRISCV_FORMAL
 
 run_datapath_tb:
 	obj_dir/Vdatapath_tb

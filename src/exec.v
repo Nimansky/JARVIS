@@ -28,6 +28,14 @@ module exec(
     input [1:0] forward_rs2,
     input [31:0] mem_forward,
     input [31:0] wb_forward,
+    input valid_in,
+
+    `ifdef RISCV_FORMAL
+    // signals for RVFI
+    input [31:0] rvfi_insn_in,
+    input [4:0] rvfi_rs1_addr_in,
+    input [4:0] rvfi_rs2_addr_in,
+    `endif
 
     output [31:0] target_pc,
     output pc_src,
@@ -39,7 +47,21 @@ module exec(
     output [2:0] mem_width_out,
     output [31:0] exec_out,
     output [31:0] mem_write_data_out,
-    output [31:0] next_pc_out
+    output [31:0] next_pc_out,
+    output valid_out
+
+    `ifdef RISCV_FORMAL
+    // signals for RVFI
+    , output reg [31:0] rvfi_insn,
+    output reg [31:0] rvfi_pc_rdata,
+    output reg [31:0] rvfi_pc_wdata,
+    output reg [4:0]  rvfi_rs1_addr,
+    output reg [4:0]  rvfi_rs2_addr,
+    output reg [31:0] rvfi_rs1_rdata,
+    output reg [31:0] rvfi_rs2_rdata,
+    output reg [4:0]  rvfi_rd_addr
+
+    `endif
 );
 
 
@@ -131,6 +153,17 @@ module exec(
     reg [31:0] mem_write_data_reg;
     reg [2:0] mem_width_out_reg;
     reg [31:0] next_pc_reg;
+    reg valid_out_reg;
+    `ifdef RISCV_FORMAL
+    reg [31:0] rvfi_insn_reg;
+    reg [31:0] rvfi_pc_rdata_reg;
+    reg [31:0] rvfi_pc_wdata_reg;
+    reg [4:0] rvfi_rs1_addr_reg;
+    reg [4:0] rvfi_rs2_addr_reg;
+    reg [31:0] rvfi_rs1_rdata_reg;
+    reg [31:0] rvfi_rs2_rdata_reg;
+    reg [4:0] rvfi_rd_addr_reg;
+    `endif
 
     always @ (posedge clk or negedge reset) begin
         if (flush == 1'b1 || reset == 1'b0) begin
@@ -143,6 +176,18 @@ module exec(
             exec_out_reg <= 32'h00000000;
             mem_write_data_reg <= 32'h00000000;
             next_pc_reg <= 32'h00000000;
+            valid_out_reg <= 1'b0;
+
+            `ifdef RISCV_FORMAL
+            rvfi_insn_reg <= 32'h00000000;
+            rvfi_pc_rdata_reg <= 32'h00000000;
+            rvfi_pc_wdata_reg <= 32'h00000000;
+            rvfi_rs1_addr_reg <= 5'b00000;
+            rvfi_rs2_addr_reg <= 5'b00000;
+            rvfi_rs1_rdata_reg <= 32'h00000000;
+            rvfi_rs2_rdata_reg <= 32'h00000000;
+            rvfi_rd_addr_reg <= 5'b00000;
+            `endif
         end else if (!stall) begin
             rd_write_enable_reg <= rd_write_enable;
             rd_write_addr_reg <= rd_write_addr;
@@ -153,6 +198,18 @@ module exec(
             exec_out_reg <= out;
             mem_write_data_reg <= rs2_data_fwd;
             next_pc_reg <= next_pc_in;
+            valid_out_reg <= valid_in;
+
+            `ifdef RISCV_FORMAL
+            rvfi_insn_reg <= rvfi_insn_in;
+            rvfi_pc_rdata_reg <= pc_in;
+            rvfi_pc_wdata_reg <= pc_src ? tgt_plus_offset : next_pc_in;
+            rvfi_rs1_addr_reg <= rvfi_rs1_addr_in;
+            rvfi_rs2_addr_reg <= rvfi_rs2_addr_in;
+            rvfi_rs1_rdata_reg <= rs1_data_fwd;
+            rvfi_rs2_rdata_reg <= rs2_data_fwd;
+            rvfi_rd_addr_reg <= rd_write_addr;
+            `endif
         end
     end
 
@@ -164,5 +221,17 @@ module exec(
     assign mem_write_data_out = mem_write_data_reg;
     assign mem_width_out = mem_width_out_reg;
     assign next_pc_out = next_pc_reg;
+    assign valid_out = valid_out_reg;
+
+    `ifdef RISCV_FORMAL
+    assign rvfi_insn = rvfi_insn_reg;
+    assign rvfi_pc_rdata = rvfi_pc_rdata_reg;
+    assign rvfi_pc_wdata = rvfi_pc_wdata_reg;
+    assign rvfi_rs1_addr = rvfi_rs1_addr_reg;
+    assign rvfi_rs2_addr = rvfi_rs2_addr_reg;
+    assign rvfi_rs1_rdata = rvfi_rs1_rdata_reg;
+    assign rvfi_rs2_rdata = rvfi_rs2_rdata_reg;
+    assign rvfi_rd_addr = rvfi_rd_addr_reg;
+    `endif
 
 endmodule

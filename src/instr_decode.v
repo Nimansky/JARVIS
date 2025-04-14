@@ -15,6 +15,7 @@ module instr_decode(
     input [31:0] reg_write_data,
     input reg_write_enable,
     input [4:0] reg_write_addr,
+    input valid_in,
 
     output [31:0] pc_out,
     output [31:0] next_pc_out,
@@ -31,7 +32,14 @@ module instr_decode(
     output [31:0] rs1_data,
     output [4:0] rs2_addr,
     output [31:0] rs2_data,
-    output [4:0] rd_write_addr
+    output [4:0] rd_write_addr,
+    output valid_out
+
+    `ifdef RISCV_FORMAL
+    // signals for RVFI
+    , output reg [31:0] rvfi_insn
+
+    `endif
 );
 
     // intermediate wires
@@ -103,6 +111,11 @@ module instr_decode(
     reg [31:0] rs2_data_reg;
     reg [31:0] pc_reg;
     reg [31:0] next_pc_reg;
+    reg valid_out_reg;
+
+    `ifdef RISCV_FORMAL
+    reg [31:0] rvfi_insn_reg;
+    `endif
 
     always @ (posedge clk or negedge reset) begin
         if (flush == 1'b1 || reset == 1'b0) begin
@@ -122,6 +135,10 @@ module instr_decode(
             rs2_data_reg <= 32'h00000000;
             pc_reg <= 32'h00000000;
             next_pc_reg <= 32'h00000000;
+            valid_out_reg <= 1'b0;
+            `ifdef RISCV_FORMAL
+            rvfi_insn_reg <= 32'h00000000;
+            `endif
         end else if (!stall) begin
             rd_write_enable_reg <= rd_write_en;
             rd_write_addr_reg <= instr[11:7];
@@ -139,6 +156,10 @@ module instr_decode(
             rs2_data_reg <= rs2_d;
             pc_reg <= pc_in;
             next_pc_reg <= next_pc_in;
+            valid_out_reg <= valid_in;
+            `ifdef RISCV_FORMAL
+            rvfi_insn_reg <= instr;
+            `endif
         end
     end
 
@@ -158,5 +179,9 @@ module instr_decode(
     assign rs1_data = rs1_data_reg;
     assign rs2_addr = rs2_addr_reg;
     assign rs2_data = rs2_data_reg;
+    assign valid_out = valid_out_reg;
+    `ifdef RISCV_FORMAL
+    assign rvfi_insn = rvfi_insn_reg;
+    `endif
 
 endmodule;

@@ -249,6 +249,13 @@ The implementation is fairly straight-forward: Establish a single signal (like a
 We have already implemented jumps and branches. However, without any prediction logic, as it currently stands, the 2 instructions in the IF and ID stage may be invalid once a branch is taken in the EX stage; therefore, we need to _flush_ the IF and ID stages (i.e. reset all their values to 0; equivalent to inserting a NOP).  
 To that end, we declare a flush signal for each stage. As of now, the IF and ID flushes are driven when a jump or branch is taken in EX, and the flushes for the other stages are never driven, since there is no need yet. It might however become necessary later when implementing traps or exceptions, so I declared the signals regardless.
 
+# RVFI
+
+In order to do some formal verification, I decided to implement the RISC-V Formal Interface. This means having to bundle a bunch of signals per instruction when they're committed - i.e. at the end of the WB stage. This posed three challenges:
+1. Up to this point, WB did not possess its own pipeline registers - since the stage was clock-synchronized based on the edge-synchronized RegFile write. In other words: I now have to add pipeline registers which contain only the information necessary for the RVFI. This implies that the data also has to be forwarded from previous stages, if it isn't forwarded already (because it's not actually used)
+2. In order to prevent bloat, I will add all infrastructure related to the RVFI under an ifdef: RISCV_FORMAL. this is a quasi-standard and makes it so the RVFI is implemented when verifying, but not when e.g. synthesizing.
+3. I needed to add a "valid" flag for each stage, so I can assert when an instruction that's in WB is *actually* committing or if it's just garbage data passing the stage. I even kept the valid flag outside the `ifdef RISCV_DEBUG` because it comes in very handy for hazard handling. The valid flag is 1 until it's flushed or reset (or potentially for traps/exceptions later), when it becomes 0.
+
 # Problems I ran into
 
 - When implementing Datapath:

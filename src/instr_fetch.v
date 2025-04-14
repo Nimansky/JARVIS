@@ -11,7 +11,8 @@ module instr_fetch(
     input [31:0] pc_target_exec,
     input pc_src_exec,
     output wire [31:0] instr_decode,
-    output wire [31:0] pc_decode, next_pc_decode
+    output wire [31:0] pc_decode, next_pc_decode,
+    output wire valid
 );
 
 
@@ -50,16 +51,19 @@ module instr_fetch(
     reg [31:0] fetched_instr_reg;
     reg [31:0] pc_reg;
     reg [31:0] next_pc_reg;
+    reg valid_reg;
 
     always @ (posedge clk or negedge reset) begin
         if (flush == 1'b1 || reset == 1'b0) begin
             fetched_instr_reg <= 32'h00000000;
             pc_reg <= 32'h00000000;
             next_pc_reg <= 32'h00000000;
+            valid_reg <= 1'b0;
         end else if (!stall) begin
             fetched_instr_reg <= fetched_instr;
             pc_reg <= pc;
             next_pc_reg <= next_pc;
+            valid_reg <= 1'b1;
         end
     end
 
@@ -67,5 +71,6 @@ module instr_fetch(
     assign instr_decode = fetched_instr_reg;
     assign pc_decode = pc_reg;
     assign next_pc_decode = next_pc_reg;
+    assign valid = valid_reg;
 
 endmodule
