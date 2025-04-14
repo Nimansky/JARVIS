@@ -1,4 +1,4 @@
-`include "src/datapath.v"
+`include "src/top.v"
 
 module datapath_tb();
 
@@ -23,7 +23,7 @@ module datapath_tb();
     wire [31:0] rvfi_mem_wdata;
     `endif
 
-    datapath datapath(
+    top dut(
         .clk(clk),
         .reset(reset)
         `ifdef RISCV_FORMAL

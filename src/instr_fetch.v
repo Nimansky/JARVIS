@@ -10,6 +10,11 @@ module instr_fetch(
     input stall,
     input [31:0] pc_target_exec,
     input pc_src_exec,
+
+    // signals for external memory interface
+    output wire [31:0] memreq_addr,
+    input wire [31:0] memresp_data_in,
+
     output wire [31:0] instr_decode,
     output wire [31:0] pc_decode, next_pc_decode,
     output wire valid
@@ -33,13 +38,8 @@ module instr_fetch(
         .pc(pc)
     );
 
-
-    // for now nothing needs to be done besides fetching an instruction
-    instr_mem #(.PROG_NAME("sample_prog0")) im (
-        .clk(clk),
-        .addr(pc),
-        .data_out(fetched_instr)
-    );
+    assign memreq_addr = pc;
+    assign fetched_instr = memresp_data_in;
 
     pc_adder pc_adder(
         .a(pc),

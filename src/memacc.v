@@ -1,4 +1,3 @@
-`include "src/data_mem.v"
 `include "src/mem_extender.v"
 
 module memacc(
@@ -28,6 +27,13 @@ module memacc(
     input [31:0] rvfi_rs1_rdata_in,
     input [31:0] rvfi_rs2_rdata_in,
     `endif
+
+    // signals for external memory interface
+    output [31:0] memreq_addr,        
+    output memreq_write_enable,
+    output [31:0] memreq_write_data,
+    output [2:0] memreq_data_width,
+    input [31:0] memresp_data_in,
     
     output [31:0] exec_data_out,
     output [31:0] mem_data_out,
@@ -57,14 +63,11 @@ module memacc(
 
     wire [31:0] mem_data;
 
-    data_mem dm (
-        .clk(clk),
-        .addr(exec_data_in),
-        .mem_width(mem_width),          // we implement our data_memory module to be able to load and store 8, 16 and 32 bits - if the memory can only handle 32 bits at once, we need to handle the other cases here instead
-        .write_enable(mem_write_enable),
-        .data_in(mem_write_data),
-        .data_out(mem_data)
-    );
+    assign memreq_addr = exec_data_in;
+    assign memreq_write_enable = mem_write_enable;
+    assign memreq_write_data = mem_write_data;
+    assign memreq_data_width = mem_width;
+    assign mem_data = memresp_data_in;
 
     // depending on the width of the mem operation, we receive 8, 16 or 32 (unsigned or signed) bits from memory - extend them if necessary
     wire [31:0] mem_data_ext;
