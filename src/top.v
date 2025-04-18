@@ -1,5 +1,6 @@
 `include "src/datapath.v"
 `include "src/data_mem.v"
+`include "src/instr_mem.v"
 
 module top(
     input clk,
@@ -34,9 +35,14 @@ module top(
     wire dmem_req_write_enable;
     wire [31:0] dmem_req_write_data;
     wire [2:0] dmem_req_data_width;
+    wire dmem_req_ready;
+    wire dmem_resp_valid;
     wire [31:0] dmem_resp_data_in;
     wire [31:0] imem_req_addr;
+    wire imem_req_ready;
+    wire imem_resp_valid;
     wire [31:0] imem_resp_data_in;
+
 
     // Instantiate the datapath module
     datapath dp (
@@ -46,9 +52,13 @@ module top(
         .dmem_req_write_enable(dmem_req_write_enable),
         .dmem_req_write_data(dmem_req_write_data),
         .dmem_req_data_width(dmem_req_data_width),
+        .dmem_req_ready(dmem_req_ready),
         .dmem_resp_data_in(dmem_resp_data_in),
+        .dmem_resp_valid(dmem_resp_valid),
         .imem_req_addr(imem_req_addr),
-        .imem_resp_data_in(imem_resp_data_in)
+        .imem_req_ready(imem_req_ready),
+        .imem_resp_data_in(imem_resp_data_in),
+        .imem_resp_valid(imem_resp_valid)
 
         `ifdef RISCV_FORMAL
         , .rvfi_valid(rvfi_valid),

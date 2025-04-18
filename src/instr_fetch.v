@@ -1,4 +1,3 @@
-`include "src/instr_mem.v"
 `include "src/mux.v"
 `include "src/pc_module.v"
 `include "src/pc_adder.v"
@@ -13,7 +12,9 @@ module instr_fetch(
 
     // signals for external memory interface
     output wire [31:0] memreq_addr,
+    output wire memreq_ready,
     input wire [31:0] memresp_data_in,
+    input wire memresp_valid,
 
     output wire [31:0] instr_decode,
     output wire [31:0] pc_decode, next_pc_decode,
@@ -39,6 +40,7 @@ module instr_fetch(
     );
 
     assign memreq_addr = pc;
+    assign memreq_ready = !stall;   // request instruction mem fetch when not stalled
     assign fetched_instr = memresp_data_in;
 
     pc_adder pc_adder(

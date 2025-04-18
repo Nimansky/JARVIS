@@ -33,7 +33,9 @@ module memacc(
     output memreq_write_enable,
     output [31:0] memreq_write_data,
     output [2:0] memreq_data_width,
+    output memreq_ready,
     input [31:0] memresp_data_in,
+    input memresp_valid,
     
     output [31:0] exec_data_out,
     output [31:0] mem_data_out,
@@ -67,6 +69,7 @@ module memacc(
     assign memreq_write_enable = mem_write_enable;
     assign memreq_write_data = mem_write_data;
     assign memreq_data_width = mem_width;
+    assign memreq_ready = res_src_in == 2'b01;
     assign mem_data = memresp_data_in;
 
     // depending on the width of the mem operation, we receive 8, 16 or 32 (unsigned or signed) bits from memory - extend them if necessary

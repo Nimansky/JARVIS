@@ -13,10 +13,14 @@ module datapath (
     output dmem_req_write_enable,
     output [31:0] dmem_req_write_data,
     output [2:0] dmem_req_data_width,
+    output dmem_req_ready,
     input [31:0] dmem_resp_data_in,
+    input dmem_resp_valid,
 
     output [31:0] imem_req_addr,
-    input [31:0] imem_resp_data_in
+    output imem_req_ready,
+    input [31:0] imem_resp_data_in,
+    input imem_resp_valid
 
     `ifdef RISCV_FORMAL
     , output rvfi_valid,
@@ -76,7 +80,9 @@ module datapath (
         .pc_target_exec(exec_to_fetch_target_pc),  
         .pc_src_exec(exec_to_fetch_pc_src),            // 0 means PC should be incremented by 4 - needs output from exec
         .memreq_addr(imem_req_addr),
+        .memreq_ready(imem_req_ready),
         .memresp_data_in(imem_resp_data_in),
+        .memresp_valid(imem_resp_valid),
         .instr_decode(fetch_to_decode_instr),
         .pc_decode(fetch_to_decode_pc),
         .next_pc_decode(fetch_to_decode_next_pc),
@@ -261,7 +267,9 @@ module datapath (
         .memreq_write_enable(dmem_req_write_enable),
         .memreq_write_data(dmem_req_write_data),
         .memreq_data_width(dmem_req_data_width),
+        .memreq_ready(dmem_req_ready),
         .memresp_data_in(dmem_resp_data_in),
+        .memresp_valid(dmem_resp_valid),
         .exec_data_out(memacc_to_wb_exec_data_out),
         .mem_data_out(memacc_to_wb_mem_data_out),
         .next_pc_out(memacc_to_wb_next_pc),
